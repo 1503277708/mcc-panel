@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MCC 控制台</title>
+<title>MCC 控制台 · 多面板</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=VT323&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* MCSM 8 inspired light theme, Chinese UI */
     --bg: #f5f6f8;
     --bg-soft: #eef0f3;
     --bg-card: #ffffff;
@@ -33,7 +32,6 @@
     --danger: #ef4444;
     --danger-soft: #fee2e2;
     --info: #3b82f6;
-    --purple: #8b5cf6;
     --teal: #14b8a6;
 
     --term-bg: #1e1e22;
@@ -41,13 +39,12 @@
     --term-muted: #71717a;
     --term-green: #4ade80;
     --term-yellow: #facc15;
-    --term-cyan: #22d3ee;
     --term-red: #f87171;
     --term-blue: #60a5fa;
 
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
     --radius: 8px;
     --radius-lg: 12px;
   }
@@ -59,7 +56,6 @@
     font-size: 14px; line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--primary); text-decoration: none; }
   button { font-family: inherit; cursor: pointer; }
   code, .mono { font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace; }
 
@@ -72,7 +68,7 @@
     color: var(--text-inv);
     position: sticky; top: 0; z-index: 100;
   }
-  .nav-left { display: flex; align-items: center; gap: 32px; }
+  .nav-left { display: flex; align-items: center; gap: 24px; }
   .logo {
     display: flex; align-items: center; gap: 10px;
     font-family: 'VT323', monospace;
@@ -94,7 +90,6 @@
     background: transparent; border: none;
     border-radius: 6px;
     font-size: 13.5px; font-weight: 500;
-    transition: all 0.15s;
   }
   .nav-tab:hover { color: white; background: var(--bg-nav-hover); }
   .nav-tab.active { color: white; background: var(--bg-nav-active); }
@@ -105,16 +100,26 @@
     background: transparent; border: none;
     color: rgba(255,255,255,0.7);
     border-radius: 6px;
-    transition: all 0.15s;
     font-size: 16px;
   }
   .icon-btn:hover { background: var(--bg-nav-hover); color: white; }
 
   /* ====== 布局 ====== */
-  .page { max-width: 1400px; margin: 0 auto; padding: 24px; }
-  .breadcrumb { color: var(--text-soft); font-size: 13px; margin-bottom: 16px; }
-  .breadcrumb .sep { margin: 0 8px; color: var(--text-dim); }
-  .breadcrumb .current { color: var(--text); font-weight: 500; }
+  .page { max-width: 1600px; margin: 0 auto; padding: 20px 24px; }
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+  .toolbar h2 { font-size: 18px; font-weight: 600; }
+  .toolbar .sub { font-size: 12.5px; color: var(--text-soft); }
+
+  /* ====== 多面板网格 ====== */
+  .panels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+    gap: 16px;
+  }
 
   /* ====== 卡片 ====== */
   .card {
@@ -122,57 +127,33 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    margin-bottom: 16px;
     overflow: hidden;
   }
-  .card-header {
-    padding: 14px 20px;
+
+  /* ====== 面板卡 ====== */
+  .panel { display: flex; flex-direction: column; }
+  .panel-head {
+    padding: 12px 16px;
     border-bottom: 1px solid var(--border-soft);
     display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-soft);
   }
-  .card-title {
-    font-size: 14px; font-weight: 600; color: var(--text);
-    display: flex; align-items: center; gap: 8px;
+  .panel-title { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+  .panel-name {
+    font-size: 14px; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .card-body { padding: 20px; }
-  .card-row {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  .panel-server {
+    font-size: 11px; color: var(--text-soft);
+    font-family: 'JetBrains Mono', monospace;
   }
+  .panel-actions { display: flex; gap: 4px; }
+  .panel-actions .btn-icon { padding: 4px 8px; font-size: 13px; }
 
-  /* ====== 统计 ====== */
-  .stat-card { padding: 20px; }
-  .stat-label { font-size: 12.5px; color: var(--text-soft); font-weight: 500; }
-  .stat-value {
-    font-size: 32px; font-weight: 600; color: var(--text);
-    margin-top: 8px;
-  }
-  .stat-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .panel-body { padding: 12px 16px; }
 
-  /* ====== 实例列表 ====== */
-  .instance-list { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
-  .instance-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .instance-item:hover { border-color: var(--primary); background: #fafbff; }
-  .instance-item.active { border-color: var(--primary); background: var(--primary-soft); }
-  .instance-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
-  .instance-name { font-weight: 500; font-size: 13.5px; }
-  .instance-server { font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono', monospace; }
-  .instance-right { display: flex; align-items: center; gap: 8px; }
-  .instance-menu {
-    background: transparent; border: none; color: var(--text-soft);
-    padding: 4px 8px; border-radius: 4px; font-size: 16px;
-  }
-  .instance-menu:hover { background: var(--bg-soft); color: var(--text); }
-
-  /* ====== 状态点 ====== */
-  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+  /* ====== 状态 ====== */
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; }
   .status-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--text-dim);
@@ -183,27 +164,101 @@
   .status-dot.waiting { background: var(--info); box-shadow: 0 0 0 2px var(--primary-soft); animation: pulse 1.5s infinite; }
   .status-dot.error { background: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft); }
   .status-dot.offline { background: #d1d5db; }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   .status-text.online { color: var(--success); font-weight: 500; }
   .status-text.connecting { color: var(--warning); font-weight: 500; }
   .status-text.waiting { color: var(--info); font-weight: 500; }
   .status-text.error { color: var(--danger); font-weight: 500; }
   .status-text.offline { color: var(--text-soft); }
-  .status-label-zh { font-size: 11.5px; }
-  .status-label-en { font-size: 10.5px; opacity: 0.7; margin-left: 2px; }
+
+  /* ====== 终端 ====== */
+  .terminal {
+    background: var(--term-bg);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .terminal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 10px;
+    background: #161618;
+    border-bottom: 1px solid #2a2a2e;
+  }
+  .terminal-dots { display: flex; gap: 5px; }
+  .terminal-dots span { width: 9px; height: 9px; border-radius: 50%; }
+  .terminal-name { font-size: 11px; color: var(--term-muted); font-family: 'JetBrains Mono', monospace; }
+  .terminal-body {
+    height: 220px;
+    overflow-y: auto;
+    padding: 10px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--term-text);
+  }
+  .terminal-body::-webkit-scrollbar { width: 6px; }
+  .terminal-body::-webkit-scrollbar-thumb { background: #3a3a40; border-radius: 3px; }
+  .term-line { white-space: pre-wrap; word-break: break-all; }
+  .term-line .ts { color: var(--term-muted); margin-right: 6px; font-size: 10.5px; }
+  .term-line.system .msg { color: var(--term-muted); font-style: italic; }
+  .term-line.input .msg { color: var(--term-green); }
+  .term-line.output .msg { color: var(--term-text); }
+  .term-line.error .msg { color: var(--term-red); }
+  .term-line.warn .msg { color: var(--term-yellow); }
+
+  /* ====== 命令输入 ====== */
+  .cmd-row {
+    display: flex; gap: 6px; margin-top: 8px;
+  }
+  .cmd-input {
+    flex: 1;
+    padding: 7px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--term-bg);
+    color: var(--term-text);
+    border: 1px solid #2a2a2e;
+    border-radius: 4px;
+    outline: none;
+  }
+  .cmd-input:focus { border-color: var(--primary); }
+  .cmd-input::placeholder { color: var(--term-muted); }
+
+  /* ====== 快捷按钮 ====== */
+  .quick {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .qbtn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 10.5px; font-weight: 500;
+    transition: all 0.1s;
+  }
+  .qbtn:hover { background: white; border-color: var(--primary); }
+  .qbtn .ico { font-size: 13px; }
+  .qbtn.intern { border-left: 2px solid var(--info); }
+  .qbtn.server { border-left: 2px solid var(--teal); }
+  .qbtn.tp { border-left: 2px solid var(--success); }
+  .qbtn.chat { border-left: 2px solid var(--warning); }
+  .qbtn.danger { border-left: 2px solid var(--danger); }
+  .qbtn.danger:hover { background: var(--danger-soft); border-color: var(--danger); }
 
   /* ====== 按钮 ====== */
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 7px 14px;
-    font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    padding: 6px 12px;
+    font-size: 12.5px; font-weight: 500;
     background: white; color: var(--text);
     border: 1px solid var(--border);
     border-radius: 6px;
-    transition: all 0.15s;
     white-space: nowrap;
   }
   .btn:hover { background: var(--bg-soft); border-color: #d4d8dd; }
@@ -213,138 +268,26 @@
   .btn-danger:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
   .btn-ghost { background: transparent; border-color: transparent; }
   .btn-ghost:hover { background: var(--bg-soft); }
-  .btn-sm { padding: 4px 10px; font-size: 12px; }
-  .btn-icon { padding: 6px; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-sm { padding: 4px 8px; font-size: 11.5px; }
+  .btn-icon { padding: 4px 6px; }
 
   /* ====== 输入 ====== */
-  .input, .select {
+  .input {
     width: 100%;
-    padding: 8px 12px;
+    padding: 7px 10px;
     font-family: inherit; font-size: 13px;
-    color: var(--text);
     background: white;
     border: 1px solid var(--border);
     border-radius: 6px;
-    transition: all 0.15s;
   }
-  .input:focus, .select:focus {
+  .input:focus {
     outline: none; border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   }
-  .label {
-    display: block; font-size: 12.5px; font-weight: 500;
-    color: var(--text-soft); margin-bottom: 6px;
-  }
-  .form-row { margin-bottom: 14px; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .form-hint { font-size: 11.5px; color: var(--text-dim); margin-top: 4px; }
-
-  /* ====== 终端 ====== */
-  .terminal {
-    background: var(--term-bg);
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
-  .terminal-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 16px;
-    background: #161618;
-    border-bottom: 1px solid #2a2a2e;
-  }
-  .terminal-tabs { display: flex; align-items: center; gap: 6px; }
-  .terminal-tab {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px;
-    background: #2a2a2e; color: var(--term-muted);
-    border-radius: 4px;
-    font-size: 12px; font-family: 'JetBrains Mono', monospace;
-  }
-  .terminal-tab.active { background: #3a3a40; color: var(--term-text); }
-  .terminal-dots { display: flex; gap: 6px; }
-  .terminal-dot { width: 11px; height: 11px; border-radius: 50%; background: #4a4a52; }
-  .terminal-body {
-    height: 460px;
-    overflow-y: auto;
-    padding: 14px 16px;
-    font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
-    font-size: 12.5px;
-    line-height: 1.55;
-    color: var(--term-text);
-  }
-  .terminal-body::-webkit-scrollbar { width: 8px; }
-  .terminal-body::-webkit-scrollbar-thumb { background: #3a3a40; border-radius: 4px; }
-  .terminal-body::-webkit-scrollbar-track { background: transparent; }
-  .term-line { white-space: pre-wrap; word-break: break-all; }
-  .term-line .ts { color: var(--term-muted); margin-right: 8px; font-size: 11.5px; }
-  .term-line.system .msg { color: var(--term-muted); font-style: italic; }
-  .term-line.input .msg { color: var(--term-green); }
-  .term-line.output .msg { color: var(--term-text); }
-  .term-line.error .msg { color: var(--term-red); }
-  .term-line.warn .msg { color: var(--term-yellow); }
-  .term-line.chat .msg { color: var(--term-cyan); }
-  .term-line.devicecode .msg { color: var(--term-yellow); font-weight: 500; }
-  .term-line .cmd { color: var(--term-blue); }
-  .term-input-bar {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 16px;
-    background: #161618;
-    border-top: 1px solid #2a2a2e;
-  }
-  .term-input-bar .prompt {
-    color: var(--term-green); font-family: 'JetBrains Mono', monospace;
-    font-size: 13px; font-weight: 600;
-  }
-  .term-input {
-    flex: 1;
-    background: transparent; border: none; outline: none;
-    color: var(--term-text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-  }
-  .term-input::placeholder { color: var(--term-muted); }
-
-  /* ====== 快捷操作 ====== */
-  .actions { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
-  .action {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 4px;
-    padding: 12px 8px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-size: 12px; font-weight: 500;
-    transition: all 0.15s;
-    text-align: center;
-  }
-  .action:hover { border-color: var(--primary); background: #fafbff; transform: translateY(-1px); }
-  .action .ico { font-size: 18px; }
-  .action.intern { border-left: 3px solid var(--info); }
-  .action.server { border-left: 3px solid var(--teal); }
-  .action.tp { border-left: 3px solid var(--success); }
-  .action.chat { border-left: 3px solid var(--warning); }
-  .action.danger { border-left: 3px solid var(--danger); }
-  .action.danger:hover { background: var(--danger-soft); border-color: var(--danger); }
-
-  /* ====== 白名单 ====== */
-  .whitelist { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px; }
-  .whitelist-item {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 10px;
-    background: var(--success-soft);
-    color: #047857;
-    border: 1px solid #a7f3d0;
-    border-radius: 999px;
-    font-size: 12.5px; font-weight: 500;
-  }
-  .whitelist-item .x {
-    cursor: pointer; color: #059669; font-weight: 700;
-    width: 14px; height: 14px; display: grid; place-items: center;
-    border-radius: 50%; font-size: 14px; line-height: 1;
-  }
-  .whitelist-item .x:hover { background: rgba(0,0,0,0.08); }
+  .label { display: block; font-size: 12px; font-weight: 500; color: var(--text-soft); margin-bottom: 4px; }
+  .form-row { margin-bottom: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 80px; gap: 10px; }
+  .form-hint { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
 
   /* ====== 模态框 ====== */
   .modal-back {
@@ -361,14 +304,14 @@
     overflow: hidden;
   }
   .modal-head {
-    padding: 16px 20px;
+    padding: 14px 18px;
     border-bottom: 1px solid var(--border-soft);
     display: flex; align-items: center; justify-content: space-between;
   }
-  .modal-title { font-size: 15px; font-weight: 600; }
-  .modal-body { padding: 20px; }
+  .modal-title { font-size: 14.5px; font-weight: 600; }
+  .modal-body { padding: 18px; }
   .modal-foot {
-    padding: 14px 20px;
+    padding: 12px 18px;
     border-top: 1px solid var(--border-soft);
     display: flex; justify-content: flex-end; gap: 8px;
     background: var(--bg-soft);
@@ -377,26 +320,29 @@
   /* ====== 设备码 ====== */
   .device-box {
     background: linear-gradient(135deg, #1e3a8a 0%, #5b21b6 100%);
-    color: white; padding: 20px; border-radius: var(--radius);
-    text-align: center; margin: 16px 0;
+    color: white; padding: 18px; border-radius: 8px;
+    text-align: center; margin: 14px 0;
   }
-  .device-url { font-size: 13px; opacity: 0.85; margin-bottom: 4px; word-break: break-all; }
+  .device-url { font-size: 12.5px; opacity: 0.85; word-break: break-all; }
   .device-code {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 28px; font-weight: 700; letter-spacing: 4px;
+    font-size: 26px; font-weight: 700; letter-spacing: 4px;
     background: rgba(255,255,255,0.15); padding: 12px;
-    border-radius: 6px; margin: 8px 0;
+    border-radius: 6px; margin: 10px 0;
     user-select: all;
   }
-  .device-tip { font-size: 12px; opacity: 0.85; margin-top: 8px; }
+  .device-tip { font-size: 12px; opacity: 0.85; }
 
   /* ====== 空状态 ====== */
-  .empty { text-align: center; padding: 60px 20px; color: var(--text-soft); }
-  .empty .ico { font-size: 48px; opacity: 0.4; margin-bottom: 12px; }
-  .empty .title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-  .empty .sub { font-size: 12.5px; }
+  .empty {
+    text-align: center; padding: 80px 20px;
+    color: var(--text-soft);
+    grid-column: 1 / -1;
+  }
+  .empty .ico { font-size: 64px; opacity: 0.3; margin-bottom: 16px; }
+  .empty .title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .empty .sub { font-size: 13px; }
 
-  /* ====== 工具 ====== */
   .row { display: flex; align-items: center; gap: 8px; }
   .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .col { display: flex; flex-direction: column; gap: 8px; }
@@ -408,13 +354,11 @@
   .mt-8 { margin-top: 8px; }
   .mt-16 { margin-top: 16px; }
 
-  /* ====== 移动端 ====== */
   @media (max-width: 768px) {
     .page { padding: 12px; }
-    .card-row { grid-template-columns: repeat(2, 1fr); }
-    .form-grid { grid-template-columns: 1fr; }
+    .panels-grid { grid-template-columns: 1fr; }
+    .quick { grid-template-columns: repeat(4, 1fr); }
     .navbar { padding: 0 12px; }
-    .nav-left { gap: 12px; }
     .nav-tab { padding: 6px 10px; font-size: 12px; }
   }
 </style>
@@ -426,12 +370,12 @@
   <div class="nav-left">
     <div class="logo">
       <span class="logo-box">MCC</span>
-      <span>控制台</span>
+      <span>多面板控制台</span>
     </div>
     <div class="nav-tabs">
-      <button class="nav-tab active" data-tab="instances">实例</button>
+      <button class="nav-tab active" data-tab="panels">实例面板</button>
       <button class="nav-tab" data-tab="whitelist">白名单</button>
-      <button class="nav-tab" data-tab="dashboard">系统</button>
+      <button class="nav-tab" data-tab="settings">设置</button>
     </div>
   </div>
   <div class="nav-right">
@@ -443,192 +387,66 @@
   </div>
 </div>
 
-<!-- ========== 主内容 ========== -->
-<div class="page">
-
-  <div class="breadcrumb" id="breadcrumb">
-    <span>控制面板</span>
-    <span class="sep">/</span>
-    <span class="current" id="bc-current">实例</span>
+<!-- ========== 实例面板页 ========== -->
+<div id="tab-panels" class="tab-pane page">
+  <div class="toolbar">
+    <div>
+      <h2>🖥️ 我的实例</h2>
+      <div class="sub">每张卡片是一个独立的 MCC 机器人,直接在此控制</div>
+    </div>
+    <div class="row">
+      <button class="btn btn-sm" id="btn-start-all" title="全部启动">▶ 全部启动</button>
+      <button class="btn btn-sm btn-danger" id="btn-stop-all" title="全部停止">⏹ 全部停止</button>
+      <button class="btn btn-sm btn-primary" id="btn-new-instance">+ 新建实例</button>
+    </div>
   </div>
 
-  <!-- ========== 实例页 ========== -->
-  <div id="tab-instances" class="tab-pane">
-
-    <div class="card-row">
-      <div class="card stat-card">
-        <div class="stat-label">总实例数</div>
-        <div class="stat-value" id="stat-total">0</div>
-      </div>
-      <div class="card stat-card">
-        <div class="stat-label">在线</div>
-        <div class="stat-value" id="stat-online" style="color: var(--success)">0</div>
-      </div>
-      <div class="card stat-card">
-        <div class="stat-label">连接中</div>
-        <div class="stat-value" id="stat-connecting" style="color: var(--warning)">0</div>
-      </div>
-      <div class="card stat-card">
-        <div class="stat-label">白名单玩家</div>
-        <div class="stat-value" id="stat-whitelisted">0</div>
-      </div>
+  <div class="panels-grid" id="panels-grid">
+    <div class="empty">
+      <div class="ico">📦</div>
+      <div class="title">还没有任何实例</div>
+      <div class="sub">点击右上角 <b>+ 新建实例</b> 添加第一个 MCC 机器人</div>
     </div>
+  </div>
+</div>
 
-    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 16px;">
-      <!-- 左：实例列表 -->
-      <div class="card" style="height: fit-content;">
-        <div class="card-header">
-          <span class="card-title">
-            <span>🖥️</span> 我的实例
-          </span>
-          <button class="btn btn-sm btn-primary" id="btn-new-instance">+ 新建</button>
-        </div>
-        <div class="instance-list" id="instance-list">
-          <div class="empty">
-            <div class="ico">📦</div>
-            <div class="title">还没有实例</div>
-            <div class="sub">点击 <b>+ 新建</b> 添加一个</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 右：终端 + 操作 -->
+<!-- ========== 白名单页 ========== -->
+<div id="tab-whitelist" class="tab-pane page hidden">
+  <div class="card">
+    <div class="card-header" style="padding: 14px 20px; border-bottom: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">
-              <span>📺</span> 控制台
-              <span class="text-soft text-sm" id="console-subtitle" style="margin-left: 8px; cursor: pointer;" title="点击启动实例">— 请选择或新建实例</span>
-            </span>
-            <div class="row">
-              <span id="console-status-pill"></span>
-              <button class="btn btn-sm" id="btn-clear-console">清空</button>
-            </div>
-          </div>
-          <div class="card-body" style="padding: 0;">
-            <div style="padding: 16px;">
-              <div class="terminal">
-                <div class="terminal-header">
-                  <div class="terminal-tabs">
-                    <span class="terminal-tab active" id="term-tab-name">— 输出</span>
-                  </div>
-                  <div class="terminal-dots">
-                    <span class="terminal-dot" style="background:#f87171"></span>
-                    <span class="terminal-dot" style="background:#facc15"></span>
-                    <span class="terminal-dot" style="background:#4ade80"></span>
-                  </div>
-                </div>
-                <div class="terminal-body" id="console">
-                  <div class="term-line system"><span class="ts">[--:--:--]</span><span class="msg">MCC 控制台 v6 已就绪。请新建或选择一个实例。</span></div>
-                </div>
-                <div class="term-input-bar">
-                  <span class="prompt">›</span>
-                  <input class="term-input" id="cmd-input" placeholder="输入命令后回车发送...  /开头 = MCC命令, 纯文字 = 聊天" autocomplete="off" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <h2>📜 传送白名单</h2>
+        <div class="text-soft text-sm mt-8">这些玩家的 /tpa 和 /tphere 会被所有在线的实例自动接受</div>
+      </div>
+      <span class="text-soft text-sm" id="whitelist-count">0 个玩家</span>
+    </div>
+    <div class="card-body" style="padding: 20px;">
+      <div class="row" style="gap: 8px; margin-bottom: 12px;">
+        <input class="input" id="wl-input" placeholder="玩家名 (例如 Steve)" style="flex: 1;" />
+        <button class="btn btn-primary" id="btn-wl-add">+ 添加</button>
+      </div>
+      <div id="whitelist-list" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+    </div>
+  </div>
+</div>
 
-        <!-- 快捷操作 -->
-        <div class="card" id="actions-card" style="display: none;">
-          <div class="card-header">
-            <span class="card-title">
-              <span>⚡</span> 快捷操作
-            </span>
-            <span class="text-soft text-sm">点击即发送</span>
-          </div>
-          <div class="card-body">
-            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">📋 MCC 内部命令 (蓝)</div>
-            <div class="actions" style="margin-bottom: 14px;">
-              <button class="action intern" data-cmd="/help"><span class="ico">❓</span>帮助</button>
-              <button class="action intern" data-cmd="/list"><span class="ico">👥</span>玩家列表</button>
-              <button class="action intern" data-cmd="/reconnect"><span class="ico">🔄</span>重连</button>
-              <button class="action intern" data-cmd="/respawn"><span class="ico">💀</span>重生</button>
-            </div>
-            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">🏠 服务器指令 (青)</div>
-            <div class="actions" style="margin-bottom: 14px;">
-              <button class="action server" data-cmd="/home"><span class="ico">🏠</span>回家</button>
-              <button class="action server" data-cmd="/sethome"><span class="ico">📍</span>设家</button>
-              <button class="action server" data-cmd="/back"><span class="ico">↩️</span>返回</button>
-            </div>
-            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">🚪 传送 (白名单玩家自动接受)</div>
-            <div class="actions" style="margin-bottom: 14px;">
-              <button class="action tp" data-cmd="/tpaccept"><span class="ico">✅</span>同意传送</button>
-              <button class="action tp" data-cmd="/tpdeny"><span class="ico">❌</span>拒绝传送</button>
-            </div>
-            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">💬 聊天 (无 / 开头)</div>
-            <div class="actions" style="margin-bottom: 14px;">
-              <button class="action chat" data-chat="你好!"><span class="ico">👋</span>你好!</button>
-              <button class="action chat" data-chat="我先离开一下"><span class="ico">⏸️</span>离开一下</button>
-              <button class="action chat" data-chat="挂机中"><span class="ico">💤</span>挂机中</button>
-            </div>
-            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">⚠️ 危险操作 (红)</div>
-            <div class="actions">
-              <button class="action danger" data-cmd="/disconnect"><span class="ico">🔌</span>断开连接</button>
-              <button class="action danger" data-cmd="/quit"><span class="ico">⏹️</span>退出</button>
-            </div>
-          </div>
-        </div>
+<!-- ========== 设置页 ========== -->
+<div id="tab-settings" class="tab-pane page hidden">
+  <div class="card">
+    <div class="card-header" style="padding: 14px 20px; border-bottom: 1px solid var(--border-soft);">
+      <h2>📊 系统信息</h2>
+    </div>
+    <div class="card-body" style="padding: 20px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+        <div><div class="text-soft text-sm">Node.js 版本</div><div class="mono mt-8" id="d-node">--</div></div>
+        <div><div class="text-soft text-sm">面板版本</div><div class="mono mt-8">v6.0</div></div>
+        <div><div class="text-soft text-sm">MCC 程序</div><div class="mono mt-8" id="d-mcc" style="font-size: 11px;">--</div></div>
+        <div><div class="text-soft text-sm">运行时长</div><div class="mono mt-8" id="d-uptime">--</div></div>
+        <div><div class="text-soft text-sm">内存占用</div><div class="mono mt-8" id="d-mem">--</div></div>
+        <div><div class="text-soft text-sm">实例总数</div><div class="mono mt-8" id="d-instances">0</div></div>
       </div>
     </div>
   </div>
-
-  <!-- ========== 白名单页 ========== -->
-  <div id="tab-whitelist" class="tab-pane hidden">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">
-          <span>📜</span> 传送白名单
-          <span class="text-soft text-sm" style="margin-left: 8px;">这些玩家的 /tpa 和 /tphere 会被自动接受</span>
-        </span>
-        <span class="text-soft text-sm" id="whitelist-count">0 个玩家</span>
-      </div>
-      <div class="card-body">
-        <div class="row" style="gap: 8px; margin-bottom: 12px;">
-          <input class="input" id="wl-input" placeholder="玩家名 (例如 Steve)" style="flex: 1;" />
-          <button class="btn btn-primary" id="btn-wl-add">+ 添加</button>
-        </div>
-        <div class="whitelist" id="whitelist-list"></div>
-        <div class="text-soft text-sm mt-16">
-          <b>工作原理：</b>当任一实例在线时,面板会扫描 MCC 输出,匹配到白名单玩家发起的 <code class="mono">/tpa</code> 或 <code class="mono">/tphere</code> 请求时,自动在 150ms 后发送 <code class="mono">/tpaccept</code>。
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========== 系统页 ========== -->
-  <div id="tab-dashboard" class="tab-pane hidden">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">📊 系统信息</span>
-      </div>
-      <div class="card-body">
-        <div class="card-row" style="grid-template-columns: repeat(3, 1fr);">
-          <div><div class="stat-label">Node.js 版本</div><div class="mono mt-8" id="d-node">--</div></div>
-          <div><div class="stat-label">面板版本</div><div class="mono mt-8" id="d-ver">v6.0</div></div>
-          <div><div class="stat-label">MCC 程序路径</div><div class="mono mt-8" id="d-mcc" style="font-size: 11px;">--</div></div>
-          <div><div class="stat-label">运行时长</div><div class="mono mt-8" id="d-uptime">--</div></div>
-          <div><div class="stat-label">内存占用</div><div class="mono mt-8" id="d-mem">--</div></div>
-          <div><div class="stat-label">日志文件数</div><div class="mono mt-8" id="d-logs">--</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">ℹ️ MCC 命令说明</span>
-      </div>
-      <div class="card-body">
-        <div class="text-sm" style="line-height: 1.9;">
-          <div><code class="mono">/command</code> <span class="text-soft">→ MCC 内部命令 (例如 <code>/help</code>、<code>/list</code>)</span></div>
-          <div><code class="mono">/command</code> <span class="text-soft">→ 部分 <code>/</code> 开头的命令会发送到 MC 服务器 (例如 <code>/home</code>、<code>/sethome</code>)</span></div>
-          <div><code class="mono">纯文字</code> <span class="text-soft">→ 没有 <code>/</code> 前缀的内容会作为聊天消息发送</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <!-- ========== 模态框: 新建实例 ========== -->
@@ -646,17 +464,17 @@
       <div class="form-grid">
         <div class="form-row">
           <label class="label">服务器地址</label>
-          <input class="input" id="new-host" placeholder="例如:mc.hypixel.net" />
+          <input class="input" id="new-host" placeholder="mc.example.com" />
         </div>
         <div class="form-row">
           <label class="label">端口</label>
-          <input class="input" id="new-port" placeholder="25565" value="25565" />
+          <input class="input" id="new-port" value="25565" />
         </div>
       </div>
       <div class="form-row">
-        <label class="label">玩家名 (创建后启动会走微软设备码登录)</label>
+        <label class="label">玩家名</label>
         <input class="input" id="new-player" placeholder="例如:SteveBot" />
-        <div class="form-hint">显示名,启动后会要求你在 microsoft.com/link 输入验证码</div>
+        <div class="form-hint">启动后会要求你在 microsoft.com/link 输入验证码</div>
       </div>
       <div class="form-row">
         <label class="label">选项</label>
@@ -674,47 +492,44 @@
 </div>
 
 <!-- ========== 模态框: 微软登录提示 ========== -->
-<div class="modal-back hidden" id="modal-login-method">
+<div class="modal-back hidden" id="modal-login">
   <div class="modal">
     <div class="modal-head">
       <div class="modal-title">🔵 微软账号登录</div>
-      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-login-method')">✕</button>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-login')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="text-soft text-sm" style="margin-bottom: 16px; line-height: 1.6;">
-        即将为 <b id="lm-name">本实例</b> 启动 MCC,采用微软账号设备码登录。
-        <br>启动后会在屏幕上显示验证码,请在浏览器中打开 <code class="mono">https://www.microsoft.com/link</code> 输入验证码完成登录。
+      <div class="text-soft text-sm" style="margin-bottom: 14px; line-height: 1.6;">
+        即将为 <b id="lm-name">本实例</b> 启动 MCC,采用微软设备码登录。
+        <br>启动后会在终端显示验证码,请在浏览器打开 <code class="mono">https://www.microsoft.com/link</code> 完成登录。
       </div>
       <div class="device-box" style="margin: 0;">
-        <div class="device-tip" style="font-size: 13px;">🔐 微软官方设备码登录流程</div>
-        <div style="font-size: 12.5px; opacity: 0.9; margin-top: 6px;">正版账号 · 15 分钟有效 · 全自动</div>
+        <div class="device-tip" style="font-size: 13px;">🔐 微软正版设备码登录</div>
+        <div style="font-size: 12.5px; opacity: 0.9; margin-top: 6px;">15 分钟有效 · 全自动</div>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn" onclick="closeModal('modal-login-method')">取消</button>
-      <button class="btn btn-primary" id="btn-method-microsoft">启动并登录</button>
+      <button class="btn" onclick="closeModal('modal-login')">取消</button>
+      <button class="btn btn-primary" id="btn-confirm-login">启动并登录</button>
     </div>
   </div>
 </div>
 
-<!-- ========== 模态框: 设备码 ========== -->
+<!-- ========== 模态框: 设备码显示 ========== -->
 <div class="modal-back hidden" id="modal-device">
   <div class="modal" style="max-width: 500px;">
     <div class="modal-head">
-      <div class="modal-title">🔐 微软账号登录</div>
+      <div class="modal-title">🔐 设备码已就绪</div>
       <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-device')">✕</button>
     </div>
     <div class="modal-body">
       <div class="text-soft text-sm" style="margin-bottom: 12px;">
-        在浏览器中打开下面的网址,然后输入验证码完成登录:
+        在浏览器中打开下面的网址,然后输入验证码:
       </div>
       <div class="device-box">
-        <div class="device-url" id="dev-url">https://microsoft.com/link</div>
+        <div class="device-url" id="dev-url">https://www.microsoft.com/link</div>
         <div class="device-code" id="dev-code">--------</div>
         <div class="device-tip">验证码 15 分钟内有效</div>
-      </div>
-      <div class="text-soft text-sm" style="text-align: center;">
-        等待登录完成... 此窗口会在登录成功后自动关闭。
       </div>
     </div>
   </div>
@@ -765,21 +580,26 @@ const state = {
   ws: null,
   accounts: [],
   whitelist: [],
-  active: null,
   consoleLines: {},
+  loginModalFor: null,
   serverStart: Date.now(),
 };
 
 const STATUS_ZH = {
-  online: '在线',
-  connecting: '连接中',
-  waiting: '等待登录',
-  error: '错误',
-  offline: '离线',
+  online: '在线', connecting: '连接中', waiting: '等待登录', error: '错误', offline: '离线',
 };
 
+const QUICK_ACTIONS = [
+  { cmd: '/help', label: '帮助', ico: '❓', cls: 'intern' },
+  { cmd: '/list', label: '列表', ico: '👥', cls: 'intern' },
+  { cmd: '/home', label: '回家', ico: '🏠', cls: 'server' },
+  { cmd: '/sethome', label: '设家', ico: '📍', cls: 'server' },
+  { cmd: '/tpaccept', label: '同意传送', ico: '✅', cls: 'tp' },
+  { cmd: '/disconnect', label: '断开', ico: '🔌', cls: 'danger' },
+];
+
 // ============================================================
-// API 工具
+// API
 // ============================================================
 async function api(path, method = 'GET', body = null) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
@@ -795,17 +615,15 @@ async function api(path, method = 'GET', body = null) {
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   state.ws = new WebSocket(`${proto}://${location.host}/ws`);
-  state.ws.onopen = () => {
-    setWSStatus('online', '已连接');
-  };
+  state.ws.onopen = () => setWSStatus('online', '已连接');
   state.ws.onclose = () => {
     setWSStatus('offline', '已断开,重连中...');
     setTimeout(connectWS, 3000);
   };
   state.ws.onerror = () => state.ws.close();
-  state.ws.onmessage = (e) => {
+  state.ws.onmessage = e => {
     let msg; try { msg = JSON.parse(e.data); } catch { return; }
-    handleWSMessage(msg);
+    handleWS(msg);
   };
 }
 
@@ -813,21 +631,21 @@ function setWSStatus(type, text) {
   document.getElementById('ws-status').innerHTML = `<span class="status-dot ${type}"></span><span class="status-text ${type}" style="color: rgba(255,255,255,${type === 'online' ? '0.95' : '0.7'})">${text}</span>`;
 }
 
-function handleWSMessage(msg) {
+function handleWS(msg) {
   switch (msg.type) {
     case 'accounts':
       state.accounts = msg.accounts || [];
-      renderInstances();
+      renderAllPanels();
       updateStats();
       break;
     case 'log':
       appendLog(msg.accountId, msg.line, msg.level || 'output');
       break;
     case 'device-code':
-      showDeviceCode(msg.url, msg.code);
+      showDeviceCode(msg.url, msg.code, msg.accountId);
       break;
     case 'status':
-      updateAccountStatus(msg.accountId, msg.status);
+      updateStatus(msg.accountId, msg.status);
       break;
   }
 }
@@ -841,25 +659,21 @@ async function init() {
     state.accounts = data.accounts || [];
     state.whitelist = data.whitelist || [];
     state.serverStart = data.serverStart || Date.now();
-    renderInstances();
+    renderAllPanels();
     renderWhitelist();
     updateStats();
     if (data.system) {
       document.getElementById('d-node').textContent = data.system.node || '--';
       document.getElementById('d-mem').textContent = data.system.memory || '--';
-      document.getElementById('d-logs').textContent = data.system.logs || '--';
-      document.getElementById('d-mcc').textContent = data.mccInstalled ? '/opt/mcc-panel/Minecraft-Console-Client/MinecraftClient ✓' : '❌ 未安装';
+      document.getElementById('d-mcc').textContent = data.mccInstalled ? '✓ 已安装' : '❌ 未安装';
     }
-    startUptimeCounter();
-  } catch (e) {
-    console.error(e);
-  }
+    startUptime();
+  } catch (e) { console.error(e); }
   connectWS();
   setupUI();
-  log('system', 'MCC 控制台 v6 已加载');
 }
 
-function startUptimeCounter() {
+function startUptime() {
   setInterval(() => {
     const s = Math.floor((Date.now() - state.serverStart) / 1000);
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
@@ -868,80 +682,78 @@ function startUptimeCounter() {
 }
 
 // ============================================================
-// 渲染
+// 渲染 - 每个实例一张面板卡
 // ============================================================
-function renderInstances() {
-  const list = document.getElementById('instance-list');
+function renderAllPanels() {
+  const grid = document.getElementById('panels-grid');
   if (state.accounts.length === 0) {
-    list.innerHTML = '<div class="empty"><div class="ico">📦</div><div class="title">还没有实例</div><div class="sub">点击 <b>+ 新建</b> 添加一个</div></div>';
-    document.getElementById('actions-card').style.display = 'none';
+    grid.innerHTML = '<div class="empty"><div class="ico">📦</div><div class="title">还没有任何实例</div><div class="sub">点击右上角 <b>+ 新建实例</b> 添加第一个 MCC 机器人</div></div>';
     return;
   }
-  list.innerHTML = state.accounts.map(a => {
-    const isActive = state.active === a.id;
-    const st = a.status || 'offline';
-    return `
-      <div class="instance-item ${isActive ? 'active' : ''}" data-id="${a.id}">
-        <div class="instance-left">
+  grid.innerHTML = state.accounts.map(a => renderPanel(a)).join('');
+  // 绑定每张面板的事件
+  state.accounts.forEach(a => bindPanelEvents(a));
+}
+
+function renderPanel(a) {
+  const st = a.status || 'offline';
+  const isRunning = st === 'online' || st === 'connecting' || st === 'waiting';
+  return `
+    <div class="card panel" data-id="${a.id}">
+      <div class="panel-head">
+        <div class="panel-title">
+          <span>🖥️</span>
           <div style="min-width: 0; flex: 1;">
-            <div class="instance-name">${escapeHtml(a.name)}</div>
-            <div class="instance-server">${escapeHtml(a.host || '未配置')}:${a.port || 25565} · ${escapeHtml(a.player || a.user || '未命名')}</div>
+            <div class="panel-name">${escapeHtml(a.name)}</div>
+            <div class="panel-server">${escapeHtml(a.host || '未配置')}:${a.port || 25565} · ${escapeHtml(a.player || a.user || '未命名')}</div>
           </div>
-        </div>
-        <div class="instance-right">
           <span class="status">
             <span class="status-dot ${st}"></span>
             <span class="status-text ${st}">${STATUS_ZH[st] || st}</span>
           </span>
-          <button class="instance-menu" data-act="edit" data-id="${a.id}" title="编辑">⋯</button>
+        </div>
+        <div class="panel-actions">
+          ${isRunning
+            ? `<button class="btn btn-sm btn-danger" data-act="stop" data-id="${a.id}">⏹ 停止</button>`
+            : `<button class="btn btn-sm btn-primary" data-act="start" data-id="${a.id}">▶ 启动</button>`}
+          <button class="btn btn-sm btn-ghost" data-act="edit" data-id="${a.id}" title="编辑">✏️</button>
         </div>
       </div>
-    `;
-  }).join('');
-  list.querySelectorAll('.instance-item').forEach(el => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-act]')) return;
-      selectAccount(el.dataset.id);
-    });
-  });
-  list.querySelectorAll('[data-act="edit"]').forEach(b => {
-    b.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(b.dataset.id); });
-  });
+      <div class="panel-body">
+        <div class="terminal">
+          <div class="terminal-head">
+            <div class="terminal-dots">
+              <span style="background:#f87171"></span>
+              <span style="background:#facc15"></span>
+              <span style="background:#4ade80"></span>
+            </div>
+            <div class="terminal-name">${escapeHtml(a.name)}.log</div>
+            <button class="btn btn-sm btn-ghost" data-act="clear" data-id="${a.id}" style="color: var(--term-muted); font-size: 10px;">清空</button>
+          </div>
+          <div class="terminal-body" data-term="${a.id}">
+            ${renderLogLines(a.id)}
+          </div>
+        </div>
+        <div class="cmd-row">
+          <input class="cmd-input" data-cmd="${a.id}" placeholder="命令... (/开头=MCC命令, 纯文字=聊天)" autocomplete="off" />
+          <button class="btn btn-sm btn-primary" data-act="send" data-id="${a.id}">发送</button>
+        </div>
+        <div class="quick">
+          ${QUICK_ACTIONS.map(q => `
+            <button class="qbtn ${q.cls}" data-act="quick" data-id="${a.id}" data-cmd="${q.cmd}">
+              <span class="ico">${q.ico}</span>${q.label}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
-function updateStats() {
-  document.getElementById('stat-total').textContent = state.accounts.length;
-  document.getElementById('stat-online').textContent = state.accounts.filter(a => a.status === 'online').length;
-  document.getElementById('stat-connecting').textContent = state.accounts.filter(a => a.status === 'connecting' || a.status === 'waiting').length;
-  document.getElementById('stat-whitelisted').textContent = state.whitelist.length;
-}
-
-function updateAccountStatus(id, status) {
-  const a = state.accounts.find(x => x.id === id);
-  if (a) a.status = status;
-  renderInstances();
-  updateStats();
-  if (state.active === id) {
-    document.getElementById('console-subtitle').textContent = a ? `${a.name} · ${STATUS_ZH[status] || status}` : '';
-    document.getElementById('term-tab-name').textContent = a ? `${a.name} — ${STATUS_ZH[status] || status}` : '— 输出';
-  }
-}
-
-function selectAccount(id) {
-  state.active = id;
-  const a = state.accounts.find(x => x.id === id);
-  renderInstances();
-  renderConsole();
-  document.getElementById('actions-card').style.display = a ? 'block' : 'none';
-  document.getElementById('console-subtitle').textContent = a ? `${a.name} · ${STATUS_ZH[a.status] || a.status}` : '— 请选择或新建实例';
-  document.getElementById('term-tab-name').textContent = a ? `${a.name} — ${STATUS_ZH[a.status] || a.status}` : '— 输出';
-}
-
-function renderConsole() {
-  const c = document.getElementById('console');
-  const lines = state.consoleLines[state.active] || [];
-  c.innerHTML = lines.map(renderLine).join('') || '<div class="term-line system"><span class="msg">还没有输出。</span></div>';
-  c.scrollTop = c.scrollHeight;
+function renderLogLines(accountId) {
+  const lines = state.consoleLines[accountId] || [];
+  if (lines.length === 0) return '<div class="term-line system"><span class="msg">— 暂无输出 —</span></div>';
+  return lines.map(renderLine).join('');
 }
 
 function renderLine(line) {
@@ -952,34 +764,72 @@ function renderLine(line) {
 function appendLog(accountId, msg, level) {
   if (!state.consoleLines[accountId]) state.consoleLines[accountId] = [];
   state.consoleLines[accountId].push({ ts: Date.now(), msg, level });
-  if (state.consoleLines[accountId].length > 1000) state.consoleLines[accountId].shift();
-  if (state.active === accountId) {
-    const c = document.getElementById('console');
-    c.insertAdjacentHTML('beforeend', renderLine({ ts: Date.now(), msg, level }));
-    c.scrollTop = c.scrollHeight;
+  if (state.consoleLines[accountId].length > 500) state.consoleLines[accountId].shift();
+  const el = document.querySelector(`[data-term="${accountId}"]`);
+  if (el) {
+    el.insertAdjacentHTML('beforeend', renderLine({ ts: Date.now(), msg, level }));
+    el.scrollTop = el.scrollHeight;
   }
 }
 
-function log(level, msg) {
-  const id = state.active || '__system__';
-  appendLog(id, msg, level);
+function updateStatus(id, status) {
+  const a = state.accounts.find(x => x.id === id);
+  if (a) a.status = status;
+  // 局部更新面板头部
+  const panel = document.querySelector(`.panel[data-id="${id}"]`);
+  if (panel) {
+    const dot = panel.querySelector('.status-dot');
+    const txt = panel.querySelector('.status-text');
+    if (dot) { dot.className = 'status-dot ' + status; }
+    if (txt) { txt.className = 'status-text ' + status; txt.textContent = STATUS_ZH[status] || status; }
+    // 启动/停止按钮切换
+    const actions = panel.querySelector('.panel-actions');
+    const isRunning = status === 'online' || status === 'connecting' || status === 'waiting';
+    if (actions) {
+      const startBtn = actions.querySelector('[data-act="start"]');
+      const stopBtn = actions.querySelector('[data-act="stop"]');
+      if (isRunning && startBtn) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-danger';
+        btn.dataset.act = 'stop'; btn.dataset.id = id;
+        btn.textContent = '⏹ 停止';
+        btn.addEventListener('click', () => stopInstance(id));
+        startBtn.replaceWith(btn);
+      } else if (!isRunning && stopBtn) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-primary';
+        btn.dataset.act = 'start'; btn.dataset.id = id;
+        btn.textContent = '▶ 启动';
+        btn.addEventListener('click', () => openLoginModal(id));
+        stopBtn.replaceWith(btn);
+      }
+    }
+  }
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('d-instances').textContent = state.accounts.length;
 }
 
 function renderWhitelist() {
   const list = document.getElementById('whitelist-list');
   document.getElementById('whitelist-count').textContent = `${state.whitelist.length} 个玩家`;
   if (state.whitelist.length === 0) {
-    list.innerHTML = '<div class="text-dim text-sm" style="padding: 12px;">还没有添加玩家,白名单内的玩家发起的 /tpa 和 /tphere 会被自动接受。</div>';
+    list.innerHTML = '<div class="text-dim text-sm">还没有添加玩家,白名单内的玩家发起的 /tpa 和 /tphere 会被所有在线实例自动接受。</div>';
     return;
   }
   list.innerHTML = state.whitelist.map(p => `
-    <span class="whitelist-item">${escapeHtml(p)}<span class="x" data-name="${escapeHtml(p)}" title="移除">×</span></span>
+    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--success-soft); color: #047857; border: 1px solid #a7f3d0; border-radius: 999px; font-size: 12.5px; font-weight: 500;">
+      ${escapeHtml(p)}
+      <span data-rm="${escapeHtml(p)}" style="cursor: pointer; font-weight: 700; color: #059669; width: 14px; height: 14px; display: grid; place-items: center; border-radius: 50%; font-size: 14px; line-height: 1;">×</span>
+    </span>
   `).join('');
-  list.querySelectorAll('.x').forEach(x => x.addEventListener('click', () => removeFromWhitelist(x.dataset.name)));
+  list.querySelectorAll('[data-rm]').forEach(x => x.addEventListener('click', () => removeFromWhitelist(x.dataset.rm)));
 }
 
 // ============================================================
-// UI 事件
+// 事件绑定
 // ============================================================
 function setupUI() {
   document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -987,33 +837,41 @@ function setupUI() {
   });
   document.getElementById('btn-new-instance').addEventListener('click', () => openModal('modal-new'));
   document.getElementById('btn-create-instance').addEventListener('click', createInstance);
-  document.getElementById('btn-method-microsoft').addEventListener('click', () => startWithMethod('msa'));
+  document.getElementById('btn-confirm-login').addEventListener('click', confirmLogin);
   document.getElementById('btn-wl-add').addEventListener('click', addToWhitelist);
   document.getElementById('wl-input').addEventListener('keydown', e => { if (e.key === 'Enter') addToWhitelist(); });
   document.getElementById('btn-save-edit').addEventListener('click', saveEdit);
   document.getElementById('btn-delete-instance').addEventListener('click', deleteInstance);
-  document.querySelectorAll('.action[data-cmd]').forEach(b => b.addEventListener('click', () => sendCommand(b.dataset.cmd)));
-  document.querySelectorAll('.action[data-chat]').forEach(b => b.addEventListener('click', () => sendCommand(b.dataset.chat)));
-  document.getElementById('cmd-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      const v = e.target.value.trim();
-      if (v) { sendCommand(v); e.target.value = ''; }
-    }
-  });
-  document.getElementById('btn-clear-console').addEventListener('click', () => {
-    if (state.active) state.consoleLines[state.active] = [];
-    renderConsole();
-  });
   document.getElementById('btn-refresh').addEventListener('click', init);
-  document.getElementById('console-subtitle').addEventListener('click', openLoginMethod);
+  document.getElementById('btn-start-all').addEventListener('click', startAll);
+  document.getElementById('btn-stop-all').addEventListener('click', stopAll);
+}
+
+function bindPanelEvents(a) {
+  const panel = document.querySelector(`.panel[data-id="${a.id}"]`);
+  if (!panel) return;
+  panel.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const act = btn.dataset.act;
+      const id = btn.dataset.id;
+      if (act === 'start') openLoginModal(id);
+      else if (act === 'stop') stopInstance(id);
+      else if (act === 'edit') openEditModal(id);
+      else if (act === 'send') sendFromInput(id);
+      else if (act === 'clear') { state.consoleLines[id] = []; document.querySelector(`[data-term="${id}"]`).innerHTML = '<div class="term-line system"><span class="msg">— 已清空 —</span></div>'; }
+      else if (act === 'quick') sendCommand(id, btn.dataset.cmd);
+    });
+  });
+  const input = panel.querySelector('[data-cmd]');
+  if (input) input.addEventListener('keydown', e => { if (e.key === 'Enter') sendFromInput(a.id); });
 }
 
 function switchTab(name) {
-  const zhNames = { instances: '实例', whitelist: '白名单', dashboard: '系统' };
+  const zhNames = { panels: '实例面板', whitelist: '白名单', settings: '设置' };
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
   document.getElementById('tab-' + name).classList.remove('hidden');
-  document.getElementById('bc-current').textContent = zhNames[name] || name;
 }
 
 function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
@@ -1033,60 +891,71 @@ async function createInstance() {
   try {
     const r = await api('/instances', 'POST', { name, host, port, player, antiafk, chatlog });
     state.accounts = r.accounts;
-    renderInstances();
+    renderAllPanels();
     closeModal('modal-new');
-    selectAccount(r.id);
     document.getElementById('new-name').value = '';
     document.getElementById('new-host').value = '';
     document.getElementById('new-player').value = '';
   } catch (e) { alert('创建失败: ' + e.message); }
 }
 
-async function startWithMethod(method) {
-  if (!state.active) return;
-  closeModal('modal-login-method');
+function openLoginModal(id) {
+  const a = state.accounts.find(x => x.id === id);
+  if (!a) return;
+  state.loginModalFor = id;
+  document.getElementById('lm-name').textContent = a.name;
+  openModal('modal-login');
+}
+
+async function confirmLogin() {
+  if (!state.loginModalFor) return;
+  const id = state.loginModalFor;
+  closeModal('modal-login');
   try {
-    await api(`/instances/${state.active}/start`, 'POST', { method });
+    await api(`/instances/${id}/start`, 'POST', { method: 'msa' });
   } catch (e) { alert('启动失败: ' + e.message); }
 }
 
-// “启动”入口默认走微软设备码
-function startWithMicrosoft() {
-  if (!state.active) { alert('请先选择或新建一个实例'); return; }
-  const a = state.accounts.find(x => x.id === state.active);
-  if (!a) return;
-  if (a.status === 'online' || a.status === 'connecting' || a.status === 'waiting') {
-    alert('实例已经在运行,需要重启请先断开连接');
-    return;
-  }
-  document.getElementById('lm-name').textContent = a.name;
-  openModal('modal-login-method');
+async function stopInstance(id) {
+  try { await api(`/instances/${id}/stop`, 'POST'); } catch (e) { alert('停止失败: ' + e.message); }
 }
 
-async function sendCommand(cmd) {
-  if (!state.active) { alert('请先选择或新建一个实例'); return; }
-  appendLog(state.active, `> ${cmd}`, 'input');
+async function startAll() {
+  for (const a of state.accounts) {
+    if (a.status === 'offline' || a.status === 'error') {
+      try { await api(`/instances/${a.id}/start`, 'POST', { method: 'msa' }); } catch {}
+    }
+  }
+}
+
+async function stopAll() {
+  if (!confirm('确定要停止所有实例吗?')) return;
+  for (const a of state.accounts) {
+    try { await api(`/instances/${a.id}/stop`, 'POST'); } catch {}
+  }
+}
+
+function sendFromInput(id) {
+  const input = document.querySelector(`[data-cmd="${id}"]`);
+  if (!input) return;
+  const v = input.value.trim();
+  if (!v) return;
+  sendCommand(id, v);
+  input.value = '';
+}
+
+async function sendCommand(id, cmd) {
+  appendLog(id, `> ${cmd}`, 'input');
   try {
-    await api(`/instances/${state.active}/command`, 'POST', { cmd });
-  } catch (e) { appendLog(state.active, '发送失败: ' + e.message, 'error'); }
+    await api(`/instances/${id}/command`, 'POST', { cmd });
+  } catch (e) { appendLog(id, '发送失败: ' + e.message, 'error'); }
 }
 
-// 点击控制台标题 → 直接进入微软登录提示
-async function openLoginMethod() {
-  if (!state.active) { alert('请先选择或新建一个实例'); return; }
-  const a = state.accounts.find(x => x.id === state.active);
-  if (!a) return;
-  if (a.status === 'online' || a.status === 'connecting' || a.status === 'waiting') {
-    alert('实例已经在运行,需要重启请先断开连接');
-    return;
-  }
-  document.getElementById('lm-name').textContent = a.name;
-  openModal('modal-login-method');
-}
-
-function showDeviceCode(url, code) {
+function showDeviceCode(url, code, accountId) {
   document.getElementById('dev-url').textContent = url;
   document.getElementById('dev-code').textContent = code;
+  const a = state.accounts.find(x => x.id === accountId);
+  if (a) document.getElementById('lm-name').textContent = a.name;
   openModal('modal-device');
 }
 
@@ -1112,7 +981,7 @@ async function saveEdit() {
   try {
     const r = await api(`/instances/${id}`, 'PUT', data);
     state.accounts = r.accounts;
-    renderInstances();
+    renderAllPanels();
     closeModal('modal-edit');
   } catch (e) { alert('保存失败: ' + e.message); }
 }
@@ -1123,8 +992,7 @@ async function deleteInstance() {
   try {
     const r = await api(`/instances/${id}`, 'DELETE');
     state.accounts = r.accounts;
-    if (state.active === id) state.active = null;
-    renderInstances();
+    renderAllPanels();
     closeModal('modal-edit');
   } catch (e) { alert('删除失败: ' + e.message); }
 }
@@ -1148,7 +1016,6 @@ async function saveWhitelist() {
   try {
     await api('/whitelist', 'PUT', { players: state.whitelist });
     renderWhitelist();
-    updateStats();
   } catch (e) { alert('保存失败: ' + e.message); }
 }
 
@@ -1161,7 +1028,6 @@ function escapeHtml(s) {
   }[c]));
 }
 
-// 启动
 init();
 </script>
 </body>

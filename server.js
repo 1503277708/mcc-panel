@@ -327,6 +327,23 @@ app.post('/api/instances/:id/stop', (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/instances/start-all', (req, res) => {
+  db.accounts.forEach(a => {
+    const sess = manager.sessions.get(a.id);
+    if (!sess || !sess.alive) {
+      a.auth = 'msa';
+      manager.start(a, 'msa');
+    }
+  });
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.post('/api/instances/stop-all', (req, res) => {
+  manager.stopAll();
+  res.json({ ok: true });
+});
+
 app.post('/api/instances/:id/command', (req, res) => {
   const s = manager.sessions.get(req.params.id);
   if (!s) return res.status(404).json({ error: 'session not found' });

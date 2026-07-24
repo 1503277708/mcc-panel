@@ -654,9 +654,9 @@
         </div>
       </div>
       <div class="form-row">
-        <label class="label">玩家名 (离线登录时使用)</label>
+        <label class="label">玩家名 (创建后启动会走微软设备码登录)</label>
         <input class="input" id="new-player" placeholder="例如:SteveBot" />
-        <div class="form-hint">这是你机器人显示的角色名</div>
+        <div class="form-hint">显示名,启动后会要求你在 microsoft.com/link 输入验证码</div>
       </div>
       <div class="form-row">
         <label class="label">选项</label>
@@ -673,31 +673,26 @@
   </div>
 </div>
 
-<!-- ========== 模态框: 登录方式 ========== -->
+<!-- ========== 模态框: 微软登录提示 ========== -->
 <div class="modal-back hidden" id="modal-login-method">
   <div class="modal">
     <div class="modal-head">
-      <div class="modal-title">选择登录方式</div>
+      <div class="modal-title">🔵 微软账号登录</div>
       <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-login-method')">✕</button>
     </div>
     <div class="modal-body">
-      <div class="text-soft text-sm" style="margin-bottom: 14px;">为 <b id="lm-name">本实例</b> 选择登录方式:</div>
-
-      <button class="action intern" id="btn-method-offline" style="width: 100%; padding: 16px; flex-direction: row; gap: 12px; justify-content: flex-start; margin-bottom: 10px;">
-        <span style="font-size: 24px;">⚡</span>
-        <div style="text-align: left;">
-          <div style="font-weight: 600;">离线登录</div>
-          <div class="text-soft text-sm" style="font-weight: 400;">不验证账号,直接连接 (仅离线模式服务器可用)</div>
-        </div>
-      </button>
-
-      <button class="action server" id="btn-method-microsoft" style="width: 100%; padding: 16px; flex-direction: row; gap: 12px; justify-content: flex-start;">
-        <span style="font-size: 24px;">🔵</span>
-        <div style="text-align: left;">
-          <div style="font-weight: 600;">微软账号</div>
-          <div class="text-soft text-sm" style="font-weight: 400;">通过 microsoft.com/link 设备码登录 (需要正版账号)</div>
-        </div>
-      </button>
+      <div class="text-soft text-sm" style="margin-bottom: 16px; line-height: 1.6;">
+        即将为 <b id="lm-name">本实例</b> 启动 MCC,采用微软账号设备码登录。
+        <br>启动后会在屏幕上显示验证码,请在浏览器中打开 <code class="mono">https://www.microsoft.com/link</code> 输入验证码完成登录。
+      </div>
+      <div class="device-box" style="margin: 0;">
+        <div class="device-tip" style="font-size: 13px;">🔐 微软官方设备码登录流程</div>
+        <div style="font-size: 12.5px; opacity: 0.9; margin-top: 6px;">正版账号 · 15 分钟有效 · 全自动</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('modal-login-method')">取消</button>
+      <button class="btn btn-primary" id="btn-method-microsoft">启动并登录</button>
     </div>
   </div>
 </div>
@@ -992,7 +987,6 @@ function setupUI() {
   });
   document.getElementById('btn-new-instance').addEventListener('click', () => openModal('modal-new'));
   document.getElementById('btn-create-instance').addEventListener('click', createInstance);
-  document.getElementById('btn-method-offline').addEventListener('click', () => startWithMethod('offline'));
   document.getElementById('btn-method-microsoft').addEventListener('click', () => startWithMethod('msa'));
   document.getElementById('btn-wl-add').addEventListener('click', addToWhitelist);
   document.getElementById('wl-input').addEventListener('keydown', e => { if (e.key === 'Enter') addToWhitelist(); });
@@ -1056,6 +1050,19 @@ async function startWithMethod(method) {
   } catch (e) { alert('启动失败: ' + e.message); }
 }
 
+// “启动”入口默认走微软设备码
+function startWithMicrosoft() {
+  if (!state.active) { alert('请先选择或新建一个实例'); return; }
+  const a = state.accounts.find(x => x.id === state.active);
+  if (!a) return;
+  if (a.status === 'online' || a.status === 'connecting' || a.status === 'waiting') {
+    alert('实例已经在运行,需要重启请先断开连接');
+    return;
+  }
+  document.getElementById('lm-name').textContent = a.name;
+  openModal('modal-login-method');
+}
+
 async function sendCommand(cmd) {
   if (!state.active) { alert('请先选择或新建一个实例'); return; }
   appendLog(state.active, `> ${cmd}`, 'input');
@@ -1064,6 +1071,7 @@ async function sendCommand(cmd) {
   } catch (e) { appendLog(state.active, '发送失败: ' + e.message, 'error'); }
 }
 
+// 点击控制台标题 → 直接进入微软登录提示
 async function openLoginMethod() {
   if (!state.active) { alert('请先选择或新建一个实例'); return; }
   const a = state.accounts.find(x => x.id === state.active);

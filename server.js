@@ -277,7 +277,7 @@ app.post('/api/instances', (req, res) => {
   const id = 'acc-' + crypto.randomBytes(4).toString('hex');
   const acc = {
     id, name, host, port: parseInt(port) || 25565,
-    user: player, auth: 'offline',
+    user: player, auth: 'msa',
     bots: { antiafk: !!antiafk, chatlog: chatlog !== false, autotp: true }
   };
   db.accounts.push(acc);
@@ -314,7 +314,8 @@ app.delete('/api/instances/:id', (req, res) => {
 app.post('/api/instances/:id/start', (req, res) => {
   const a = getAccount(req.params.id);
   if (!a) return res.status(404).json({ error: 'not found' });
-  const method = req.body.method || 'offline';
+  // 始终采用微软设备码登录
+  const method = 'msa';
   a.auth = method;
   saveDB();
   const ok = manager.start(a, method);

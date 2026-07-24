@@ -1,17 +1,10 @@
 /**
- * MCC Control Panel v5
- * - Login method picker: offline / Microsoft device code
+ * MCC Control Panel v6
+ * - MCSM 8 inspired REST API
  * - Per-account MCC instance (one PTY each)
+ * - Microsoft device-code flow + offline
  * - Whitelist auto-accept TPA/TPHERE
- * - Token auth (fixed), heartbeats, auto-reconnect
- *
- * MCC 微软登录调用方式：
- *   MinecraftClient -server <host> -port <port> -login <user> -method msa
- *   MCC 内部会:
- *     1. 调用 Microsoft.RequestDeviceCode() 拿到 {VerificationUri, UserCode}
- *     2. Microsoft.OpenBrowser(VerificationUri) → 在服务器上 xdg-open (headless 时会失败但不影响)
- *     3. 轮询 token
- *   所以我们只要在 PTY 输出里抓 VerificationUri 和 UserCode 即可
+ * - No token auth (single user, network-level security)
  */
 
 const express = require('express');
@@ -19,6 +12,7 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const os = require('os');
 const pty = require('node-pty');
 const { WebSocketServer } = require('ws');
 
@@ -26,23 +20,13 @@ const PORT = process.env.PORT || 8080;
 const ROOT = __dirname;
 const MCC_DIR = path.join(ROOT, 'Minecraft-Console-Client');
 const MCC_BIN = path.join(MCC_DIR, 'MinecraftClient');
-const TOKEN_FILE = path.join(ROOT, 'config', 'token.txt');
 const DB_FILE = path.join(ROOT, 'config', 'accounts.json');
 const WHITELIST_FILE = path.join(ROOT, 'config', 'whitelist.json');
 const LOG_DIR = path.join(ROOT, 'logs');
 
-[LOG_DIR, path.dirname(TOKEN_FILE)].forEach(d => {
+[LOG_DIR, path.dirname(DB_FILE)].forEach(d => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
-
-function loadOrCreateToken() {
-  if (fs.existsSync(TOKEN_FILE)) return fs.readFileSync(TOKEN_FILE, 'utf8').trim();
-  const t = crypto.randomBytes(16).toString('hex');
-  fs.writeFileSync(TOKEN_FILE, t);
-  return t;
-}
-const PANEL_TOKEN = loadOrCreateToken();
-console.log('🔐 Token:', PANEL_TOKEN);
 
 function loadDB() {
   if (!fs.existsSync(DB_FILE)) return { accounts: [] };
@@ -58,6 +42,7 @@ function saveWhitelist() { fs.writeFileSync(WHITELIST_FILE, JSON.stringify(white
 let db = loadDB();
 let whitelist = loadWhitelist();
 const getAccount = id => db.accounts.find(a => a.id === id);
+const SERVER_START = Date.now();
 
 // ============================================================
 // MCC Account Session
@@ -75,32 +60,32 @@ class MCCAccount {
     this.deviceCodeSent = false;
   }
 
-  buildArgs(account) {
+  buildArgs(account, method) {
     const args = [];
     if (account.host) args.push('-server', account.host);
     if (account.port) args.push('-port', String(account.port));
     if (account.user) args.push('-login', account.user);
-    // Auth - we use -method flag
-    const auth = account.auth || 'offline';
-    if (auth === 'microsoft') args.push('-method', 'msa');
-    else if (auth === 'mojang') args.push('-method', 'mojang');
+    const m = method || account.auth || 'offline';
+    if (m === 'msa' || m === 'microsoft') args.push('-method', 'msa');
+    else if (m === 'mojang') args.push('-method', 'mojang');
     else args.push('-method', 'offline');
-    // Bots
     if (account.bots) {
       if (account.bots.antiafk) args.push('-antiafk');
-      if (account.bots.logchat) args.push('-chatlog');
+      if (account.bots.chatlog) args.push('-chatlog');
     }
     return args;
   }
 
-  start(account) {
+  start(account, method) {
     if (this.alive) return false;
     if (!fs.existsSync(MCC_BIN)) {
-      broadcast({ type: 'error', msg: 'MCC 未安装: ' + MCC_BIN });
+      broadcast({ type: 'log', accountId: this.id, line: '❌ MCC 未安装: ' + MCC_BIN, level: 'error' });
+      this.status = 'error';
+      broadcastStatus(this.id, 'error');
       return false;
     }
 
-    const args = this.buildArgs(account);
+    const args = this.buildArgs(account, method);
     console.log(`[${this.name}] ${MCC_BIN} ${args.join(' ')}`);
 
     try {
@@ -111,7 +96,9 @@ class MCCAccount {
         env: { ...process.env, TERM: 'xterm-256color' }
       });
     } catch (e) {
-      broadcast({ type: 'error', msg: '启动失败: ' + e.message });
+      broadcast({ type: 'log', accountId: this.id, line: '❌ 启动失败: ' + e.message, level: 'error' });
+      this.status = 'error';
+      broadcastStatus(this.id, 'error');
       return false;
     }
 
@@ -124,10 +111,20 @@ class MCCAccount {
     const logFile = path.join(LOG_DIR, `${this.id}-${new Date().toISOString().slice(0,10)}.log`);
     this.logStream = fs.createWriteStream(logFile, { flags: 'a' });
 
+    broadcastStatus(this.id, 'connecting');
+    broadcast({ type: 'log', accountId: this.id, line: `▶ 启动: ${MCC_BIN} ${args.join(' ')}`, level: 'system' });
+
     this.pty.onData(data => {
       if (this.logStream) this.logStream.write(data);
-      broadcast({ type: 'output', accountId: this.id, data });
-      this.handleOutput(data);
+      // Strip ANSI and split into lines
+      const clean = data.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '');
+      clean.split(/\r?\n/).forEach(line => {
+        line = line.trim();
+        if (line) {
+          broadcast({ type: 'log', accountId: this.id, line, level: 'output' });
+        }
+      });
+      this.handleOutput(clean);
     });
 
     this.pty.onExit(({ exitCode }) => {
@@ -135,25 +132,20 @@ class MCCAccount {
       this.alive = false;
       this.status = 'offline';
       if (this.logStream) { try { this.logStream.end(); } catch {} this.logStream = null; }
-      broadcast({ type: 'account-status', id: this.id, status: 'offline' });
+      broadcast({ type: 'log', accountId: this.id, line: `⏹ 已退出 (code=${exitCode})`, level: 'system' });
+      broadcastStatus(this.id, 'offline');
     });
 
-    broadcast({ type: 'account-status', id: this.id, status: 'connecting' });
     return true;
   }
 
   handleOutput(data) {
     // ====== DEVICE CODE DETECTION ======
-    // MCC's MicrosoftMCCLogin prints: "To sign in, use a web browser to open the page [URL] and enter the code [CODE] to authenticate."
-    // Also may print: "Visit https://microsoft.com/link on your PC or phone and enter XXXX-XXXX to sign in"
-    // Also: "Device code: XXXX" or "User code: XXXX"
     if (!this.deviceCodeSent) {
-      // Pattern 1: standard device code flow URL
       const urlMatch = data.match(/(https?:\/\/(?:microsoft\.com\/(?:link|devicelogin)|login\.live\.com\/oauth20_authorize\.srf)[^\s]*)/i);
-      // Pattern 2: code (8+ chars alphanumeric)
-      const codeMatch = data.match(/(?:code|user code|enter)[:\s]+([A-Z0-9]{4,12})/i) ||
-                        data.match(/enter the code[:\s]+([A-Z0-9]{4,12})/i) ||
-                        data.match(/\[([A-Z0-9]{4,12})\]/);
+      const codeMatch = data.match(/(?:code|user code|enter the code)[:\s]+([A-Z0-9]{4,12})/i) ||
+                        data.match(/enter[:\s]+([A-Z0-9]{4}-[A-Z0-9]{4})/i) ||
+                        data.match(/\b([A-Z0-9]{8})\b/);
 
       if (urlMatch && codeMatch) {
         this.status = 'waiting';
@@ -164,23 +156,25 @@ class MCCAccount {
           code: codeMatch[1],
           url: urlMatch[1]
         });
+        broadcastStatus(this.id, 'waiting');
         console.log(`[${this.name}] Device code: ${codeMatch[1]} | URL: ${urlMatch[1]}`);
       }
     }
     // ====== LOGIN SUCCESS ======
     if (data.match(/Logged in|session.+started|joined the game|Login successful/i) && this.status !== 'online') {
       this.status = 'online';
-      broadcast({ type: 'account-status', id: this.id, status: 'online' });
+      broadcastStatus(this.id, 'online');
+      broadcast({ type: 'log', accountId: this.id, line: '✅ 已登录服务器', level: 'system' });
     }
     // ====== DISCONNECTED ======
-    if (data.match(/Disconnected|Connection lost|Connection closed|kicked from the server/i) && this.status === 'online') {
+    if (data.match(/Disconnected|Connection lost|Connection closed|kicked/i) && this.status === 'online') {
       this.status = 'connecting';
-      broadcast({ type: 'account-status', id: this.id, status: 'connecting' });
+      broadcastStatus(this.id, 'connecting');
     }
     // ====== AUTH FAILURE ======
     if (data.match(/Unable to authenticate|Authentication failed|Invalid credentials|WrongPassword/i)) {
       this.status = 'error';
-      broadcast({ type: 'account-status', id: this.id, status: 'error' });
+      broadcastStatus(this.id, 'error');
     }
     // ====== WHITELIST TPA AUTO-ACCEPT ======
     this.checkWhitelistTpa(data);
@@ -189,13 +183,11 @@ class MCCAccount {
   checkWhitelistTpa(data) {
     if (!this.alive || !this.account.bots?.autotp || whitelist.length === 0) return;
     const patterns = [
-      // TPA → me
       /(\w+)\s+has requested to teleport to you/i,
       /(\w+)\s+wants to teleport to you/i,
       /(\w+)\s+would like to teleport to you/i,
       /(\w+)\s+请求传送到你这里/,
       /(\w+)\s+想要传送到你这里/,
-      // TPHERE → them
       /(\w+)\s+has requested that you teleport to them/i,
       /(\w+)\s+wants you to teleport to them/i,
       /(\w+)\s+请求你传送到他那里/,
@@ -211,8 +203,7 @@ class MCCAccount {
             setTimeout(() => this.write('/tpaccept\r\n'), 300);
           }, 150);
           const kind = i < 5 ? 'tpa' : 'tphere';
-          broadcast({ type: 'tp-auto', accountId: this.id, player, kind });
-          console.log(`[${this.name}] Auto-accept ${kind} from ${player}`);
+          broadcast({ type: 'log', accountId: this.id, line: `🤖 Auto-accept ${kind} from ${player}`, level: 'system' });
         }
         return;
       }
@@ -238,20 +229,13 @@ class AccountManager {
     s.account = a;
     return s;
   }
-  start(a) { return this.ensure(a).start(a); }
+  start(a, method) { return this.ensure(a).start(a, method); }
   stop(id) { const s = this.sessions.get(id); if (s) s.stop(); }
-  startAll(method = 'offline') {
-    db.accounts.forEach(a => {
-      // Override auth method for batch start
-      const aCopy = { ...a, auth: method };
-      if (aCopy.host && aCopy.user) this.start(aCopy);
-    });
-  }
   stopAll() { this.sessions.forEach(s => s.stop()); }
   listStatus() {
     return db.accounts.map(a => ({
-      id: a.id, name: a.name, host: a.host, port: a.port, version: a.version,
-      auth: a.auth, user: a.user, bots: a.bots,
+      id: a.id, name: a.name, host: a.host, port: a.port,
+      player: a.user, auth: a.auth, bots: a.bots,
       status: this.sessions.get(a.id)?.status || 'offline'
     }));
   }
@@ -265,13 +249,104 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(ROOT, 'public')));
 
+// ---- API ----
+
 app.get('/api/status', (req, res) => {
+  const mem = process.memoryUsage();
+  const totalLogs = fs.existsSync(LOG_DIR) ?
+    fs.readdirSync(LOG_DIR).filter(f => f.endsWith('.log')).length : 0;
   res.json({
     accounts: manager.listStatus(),
     whitelist,
-    mccInstalled: fs.existsSync(MCC_BIN)
+    serverStart: SERVER_START,
+    system: {
+      node: process.version,
+      memory: `${(mem.rss / 1024 / 1024).toFixed(1)} MB`,
+      logs: totalLogs,
+      platform: `${os.platform()} ${os.arch()}`,
+    },
+    mccInstalled: fs.existsSync(MCC_BIN),
   });
 });
+
+app.get('/api/instances', (req, res) => res.json({ instances: manager.listStatus() }));
+
+app.post('/api/instances', (req, res) => {
+  const { name, host, port, player, antiafk, chatlog } = req.body;
+  if (!name || !host || !player) return res.status(400).json({ error: 'name/host/player required' });
+  const id = 'acc-' + crypto.randomBytes(4).toString('hex');
+  const acc = {
+    id, name, host, port: parseInt(port) || 25565,
+    user: player, auth: 'offline',
+    bots: { antiafk: !!antiafk, chatlog: chatlog !== false, autotp: true }
+  };
+  db.accounts.push(acc);
+  saveDB();
+  broadcast({ type: 'accounts', accounts: manager.listStatus() });
+  res.json({ id, accounts: manager.listStatus() });
+});
+
+app.put('/api/instances/:id', (req, res) => {
+  const a = getAccount(req.params.id);
+  if (!a) return res.status(404).json({ error: 'not found' });
+  const { name, host, port, player } = req.body;
+  if (name) a.name = name;
+  if (host) a.host = host;
+  if (port) a.port = parseInt(port) || 25565;
+  if (player) a.user = player;
+  // Stop if running
+  const s = manager.sessions.get(a.id);
+  if (s && s.alive) s.stop();
+  saveDB();
+  broadcast({ type: 'accounts', accounts: manager.listStatus() });
+  res.json({ ok: true, accounts: manager.listStatus() });
+});
+
+app.delete('/api/instances/:id', (req, res) => {
+  manager.stop(req.params.id);
+  db.accounts = db.accounts.filter(a => a.id !== req.params.id);
+  manager.sessions.delete(req.params.id);
+  saveDB();
+  broadcast({ type: 'accounts', accounts: manager.listStatus() });
+  res.json({ ok: true, accounts: manager.listStatus() });
+});
+
+app.post('/api/instances/:id/start', (req, res) => {
+  const a = getAccount(req.params.id);
+  if (!a) return res.status(404).json({ error: 'not found' });
+  const method = req.body.method || 'offline';
+  a.auth = method;
+  saveDB();
+  const ok = manager.start(a, method);
+  res.json({ ok, status: manager.sessions.get(a.id)?.status });
+});
+
+app.post('/api/instances/:id/stop', (req, res) => {
+  manager.stop(req.params.id);
+  res.json({ ok: true });
+});
+
+app.post('/api/instances/:id/command', (req, res) => {
+  const s = manager.sessions.get(req.params.id);
+  if (!s) return res.status(404).json({ error: 'session not found' });
+  const ok = s.sendCommand(req.body.cmd || '');
+  res.json({ ok });
+});
+
+app.get('/api/whitelist', (req, res) => res.json({ whitelist }));
+
+app.put('/api/whitelist', (req, res) => {
+  if (Array.isArray(req.body.players)) {
+    whitelist = req.body.players.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim());
+    saveWhitelist();
+    broadcast({ type: 'whitelist', whitelist });
+    res.json({ ok: true, whitelist });
+  } else {
+    res.status(400).json({ error: 'players must be array' });
+  }
+});
+
+// ---- WebSocket ----
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
@@ -280,27 +355,17 @@ function broadcast(msg) {
   const d = JSON.stringify(msg);
   wss.clients.forEach(c => { if (c.readyState === 1) c.send(d); });
 }
+function broadcastStatus(id, status) {
+  broadcast({ type: 'status', accountId: id, status });
+}
 
 wss.on('connection', (ws, req) => {
-  const url = new URL(req.url, 'http://x');
-  const token = url.searchParams.get('token') ||
-                (req.headers['authorization'] || '').replace('Bearer ', '');
-  if (token !== PANEL_TOKEN) {
-    ws.send(JSON.stringify({ type: 'error', msg: 'Token 错误' }));
-    setTimeout(() => ws.close(), 100);
-    return;
-  }
+  // No login - just accept any connection
   console.log('WS connected');
-  ws.send(JSON.stringify({ type: 'hello', accounts: manager.listStatus(), whitelist }));
+  ws.send(JSON.stringify({ type: 'accounts', accounts: manager.listStatus(), whitelist }));
 
   ws.isAlive = true;
   ws.on('pong', () => { ws.isAlive = true; });
-
-  ws.on('message', raw => {
-    let msg;
-    try { msg = JSON.parse(raw); } catch { return; }
-    handleWs(ws, msg);
-  });
   ws.on('close', () => console.log('WS disconnected'));
 });
 
@@ -312,77 +377,6 @@ setInterval(() => {
   });
 }, 30000);
 
-function handleWs(ws, msg) {
-  switch (msg.type) {
-    case 'ping': ws.send(JSON.stringify({ type: 'pong' })); break;
-
-    case 'create-account': {
-      const id = 'acc-' + crypto.randomBytes(4).toString('hex');
-      db.accounts.push({
-        id, name: '账号 ' + (db.accounts.length + 1),
-        host: '', port: '25565', version: '',
-        auth: 'offline', user: '', pass: '',
-        bots: { autoreconnect: true, antiafk: true, logchat: true, autotp: true }
-      });
-      saveDB();
-      broadcast({ type: 'accounts', accounts: manager.listStatus() });
-      break;
-    }
-
-    case 'update-account': {
-      const a = getAccount(msg.account.id);
-      if (a) { Object.assign(a, msg.account); saveDB(); const s = manager.sessions.get(a.id); if (s) s.account = a; }
-      break;
-    }
-
-    case 'delete-account': {
-      manager.stop(msg.id);
-      db.accounts = db.accounts.filter(a => a.id !== msg.id);
-      manager.sessions.delete(msg.id);
-      saveDB();
-      broadcast({ type: 'accounts', accounts: manager.listStatus() });
-      break;
-    }
-
-    case 'start-account': {
-      const a = getAccount(msg.id);
-      if (a && a.host && a.user) {
-        manager.start(a);
-      } else {
-        ws.send(JSON.stringify({ type: 'error', msg: '账号未配置完整（需要服务器 IP 和玩家名/邮箱）' }));
-      }
-      break;
-    }
-
-    case 'stop-account': manager.stop(msg.id); break;
-    case 'start-all': manager.startAll(msg.method || 'offline'); break;
-    case 'stop-all': manager.stopAll(); break;
-
-    case 'cmd': {
-      const s = manager.sessions.get(msg.accountId);
-      if (s) s.sendCommand(msg.text);
-      break;
-    }
-
-    case 'input': {
-      const s = manager.sessions.get(msg.accountId);
-      if (s) s.write(msg.text);
-      break;
-    }
-
-    case 'whitelist-set': {
-      if (Array.isArray(msg.whitelist)) {
-        whitelist = msg.whitelist.filter(x => typeof x === 'string' && x.trim());
-        saveWhitelist();
-        broadcast({ type: 'whitelist-update', whitelist });
-      }
-      break;
-    }
-
-    default: console.log('Unknown msg type:', msg.type);
-  }
-}
-
 // ============================================================
 // Boot
 // ============================================================
@@ -390,10 +384,10 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(`  🌐 Panel:  http://0.0.0.0:${PORT}`);
-  console.log(`  🔑 Token:  ${PANEL_TOKEN}`);
-  console.log(`  📂 MCC:    ${MCC_BIN} ${fs.existsSync(MCC_BIN) ? '✓' : '✗ 未安装'}`);
+  console.log(`  📂 MCC:    ${MCC_BIN} ${fs.existsSync(MCC_BIN) ? '✓' : '✗ MISSING'}`);
+  console.log(`  👤 Single-user mode (no token)`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 });
 
-process.on('SIGINT', () => { manager.stopAll(); server.close(); process.exit(0); });
-process.on('SIGTERM', () => { manager.stopAll(); server.close(); process.exit(0); });
+process.on('SIGINT', () => { manager.stopAll && manager.stopAll(); server.close(); process.exit(0); });
+process.on('SIGTERM', () => { server.close(); process.exit(0); });

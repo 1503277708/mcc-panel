@@ -3,1107 +3,1167 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MCC 控制台</title>
+<title>MCC Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=VT323&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1419;
-    --bg-soft: #161c24;
-    --bg-card: #1c232c;
-    --border: #2a3340;
-    --border-soft: #232b36;
-    --text: #e6edf3;
-    --text-soft: #8b98a5;
-    --text-dim: #5c6773;
-    --primary: #5eead4;
-    --primary-soft: rgba(94, 234, 212, 0.12);
-    --accent: #fbbf24;
-    --danger: #f87171;
-    --success: #4ade80;
-    --info: #60a5fa;
-    --purple: #c084fc;
+    /* MCSM 8 inspired light theme */
+    --bg: #f5f6f8;
+    --bg-soft: #eef0f3;
+    --bg-card: #ffffff;
+    --bg-nav: #1f1f23;
+    --bg-nav-hover: #2a2a2f;
+    --bg-nav-active: #2f2f35;
+    --border: #e5e7eb;
+    --border-soft: #f0f1f3;
+    --text: #1f2328;
+    --text-soft: #6b7280;
+    --text-dim: #9ca3af;
+    --text-inv: #ffffff;
+
+    --primary: #2563eb;
+    --primary-soft: #dbeafe;
+    --primary-hover: #1d4ed8;
+    --success: #10b981;
+    --success-soft: #d1fae5;
+    --warning: #f59e0b;
+    --warning-soft: #fef3c7;
+    --danger: #ef4444;
+    --danger-soft: #fee2e2;
+    --info: #3b82f6;
+    --purple: #8b5cf6;
+    --teal: #14b8a6;
+
+    --term-bg: #1e1e22;
+    --term-text: #d4d4d8;
+    --term-muted: #71717a;
+    --term-green: #4ade80;
+    --term-yellow: #facc15;
+    --term-cyan: #22d3ee;
+    --term-red: #f87171;
+    --term-blue: #60a5fa;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --radius: 8px;
+    --radius-lg: 12px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
-    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg); color: var(--text);
-    min-height: 100vh; font-size: 14px; line-height: 1.5;
-    background-image:
-      radial-gradient(at 0% 0%, rgba(94, 234, 212, 0.05) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(251, 191, 36, 0.04) 0px, transparent 50%);
+    font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
+  a { color: var(--primary); text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
 
-  .topbar {
+  /* ====== TOP NAV ====== */
+  .navbar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 20px;
-    background: rgba(15, 20, 25, 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-soft);
+    background: var(--bg-nav);
+    padding: 0 24px;
+    height: 56px;
+    color: var(--text-inv);
     position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.05);
   }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .brand-mark {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: linear-gradient(135deg, var(--primary) 0%, #2dd4bf 100%);
-    display: grid; place-items: center;
-    color: #0f1419; font-weight: 700; font-size: 14px;
+  .nav-left { display: flex; align-items: center; gap: 32px; }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'VT323', monospace;
+    font-size: 22px; letter-spacing: 1px;
+    color: white; font-weight: 700;
   }
-  .brand-text h1 { font-size: 14px; font-weight: 600; }
-  .brand-text p { font-size: 10.5px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
-  .topbar-status { display: flex; gap: 8px; align-items: center; }
-  .status-pill {
-    display: flex; align-items: center; gap: 6px;
-    padding: 5px 10px; background: var(--bg-card);
-    border: 1px solid var(--border); border-radius: 999px;
-    font-size: 11.5px; font-family: 'JetBrains Mono', monospace;
+  .logo-box {
+    display: inline-grid; place-items: center;
+    background: white; color: black;
+    font-family: 'VT323', monospace;
+    font-size: 18px; font-weight: 700;
+    padding: 2px 8px; border-radius: 2px;
+    letter-spacing: 1px;
   }
-  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-dim); }
-  .status-dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
-  .status-dot.offline { background: var(--danger); }
-  .status-dot.connecting { background: var(--accent); animation: pulse 1.4s infinite; }
-  .status-dot.waiting { background: var(--purple); animation: pulse 1.4s infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-  .app {
-    display: grid;
-    grid-template-columns: 280px 1fr 320px;
-    gap: 14px;
-    padding: 14px 18px;
-    max-width: 1800px;
-    margin: 0 auto;
-  }
-  @media (max-width: 1200px) { .app { grid-template-columns: 260px 1fr; } .col-right { display: none; } }
-  @media (max-width: 800px) { .app { grid-template-columns: 1fr; } .col-left { display: none; } }
-  .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-
-  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .card-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 14px; border-bottom: 1px solid var(--border-soft);
-  }
-  .card-head h3 {
-    font-size: 11.5px; font-weight: 600; color: var(--text);
-    display: flex; align-items: center; gap: 6px;
-    letter-spacing: 0.04em; text-transform: uppercase;
-  }
-  .card-head .accent-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
-  .card-body { padding: 12px; }
-
-  .acc-list { display: flex; flex-direction: column; gap: 5px; }
-  .acc-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 9px 10px; background: var(--bg-soft);
-    border: 1px solid var(--border-soft); border-radius: 9px;
-    cursor: pointer; transition: all 0.15s;
-  }
-  .acc-item:hover { border-color: var(--border); }
-  .acc-item.active { border-color: var(--primary); background: var(--primary-soft); }
-  .acc-status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-dim); flex-shrink: 0; }
-  .acc-status-dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
-  .acc-status-dot.connecting { background: var(--accent); animation: pulse 1.4s infinite; }
-  .acc-status-dot.offline { background: var(--text-dim); }
-  .acc-status-dot.error { background: var(--danger); }
-  .acc-status-dot.waiting { background: var(--purple); animation: pulse 1.4s infinite; }
-  .acc-info { flex: 1; min-width: 0; }
-  .acc-name { font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .acc-meta { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
-
-  .action-btn {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 5px; padding: 11px 8px;
-    background: var(--bg-soft); border: 1px solid var(--border);
-    border-radius: 9px; color: var(--text);
-    cursor: pointer; transition: all 0.15s ease;
-    font-family: inherit; font-size: 11px; text-align: center;
-  }
-  .action-btn:hover:not(:disabled) { background: var(--primary-soft); border-color: var(--primary); transform: translateY(-1px); }
-  .action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-  .action-btn svg { width: 18px; height: 18px; color: var(--primary); }
-  .action-btn .lbl { font-weight: 500; }
-  .action-btn .hint { font-size: 9px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
-  .action-btn.cmd-internal svg { color: var(--info); }
-  .action-btn.cmd-server svg { color: var(--primary); }
-  .action-btn.cmd-chat svg { color: var(--accent); }
-  .action-btn.cmd-tp svg { color: var(--success); }
-  .action-btn.cmd-danger svg { color: var(--danger); }
-  .action-btn.cmd-danger { background: rgba(248, 113, 113, 0.05); }
-  .actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 7px; }
-
-  .command-row { display: flex; gap: 6px; margin-top: 10px; }
-  .input {
-    flex: 1; padding: 8px 12px; background: var(--bg-soft);
-    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
-    font-family: 'JetBrains Mono', monospace; font-size: 12.5px; outline: none;
-  }
-  .input:focus { border-color: var(--primary); }
-  .input::placeholder { color: var(--text-dim); }
-  .btn-primary {
-    padding: 8px 14px; background: var(--primary); color: #0f1419;
-    border: none; border-radius: 8px; font-weight: 600;
-    cursor: pointer; font-family: inherit; font-size: 12px;
-  }
-  .btn-primary:hover:not(:disabled) { background: #7df0d8; }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-secondary {
-    padding: 8px 12px; background: var(--bg-soft); color: var(--text);
-    border: 1px solid var(--border); border-radius: 8px;
-    font-weight: 500; cursor: pointer; font-family: inherit; font-size: 12px;
-  }
-  .btn-ghost {
-    padding: 5px 9px; background: transparent; color: var(--text-soft);
-    border: 1px solid var(--border); border-radius: 6px;
-    cursor: pointer; font-family: inherit; font-size: 10.5px;
-  }
-  .btn-ghost:hover { color: var(--text); border-color: var(--primary); }
-
-  .console {
-    background: #0a0e13; border-radius: 0 0 12px 12px;
-    padding: 12px; height: 460px; overflow-y: auto;
-    font-family: 'JetBrains Mono', monospace; font-size: 11.5px; line-height: 1.55;
-  }
-  .console::-webkit-scrollbar { width: 7px; }
-  .console::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  .log-line { display: flex; gap: 8px; padding: 1px 0; word-break: break-word; }
-  .log-time { color: var(--text-dim); flex-shrink: 0; font-size: 10.5px; }
-  .log-tag { flex-shrink: 0; font-weight: 600; width: 50px; font-size: 10px; }
-  .log-tag.info { color: var(--info); }
-  .log-tag.warn { color: var(--accent); }
-  .log-tag.error { color: var(--danger); }
-  .log-tag.chat { color: var(--primary); }
-  .log-tag.cmd { color: var(--purple); }
-  .log-tag.tp { color: var(--success); }
-  .log-tag.system { color: var(--text-soft); }
-  .log-msg { color: var(--text); flex: 1; }
-  .log-msg .player { color: var(--accent); font-weight: 500; }
-  .log-msg .mention { color: var(--primary); font-weight: 600; }
-
-  .wl-list {
-    display: flex; flex-wrap: wrap; gap: 5px;
-    padding: 6px; min-height: 50px;
-    background: var(--bg-soft);
-    border: 1px solid var(--border-soft);
-    border-radius: 8px; margin-bottom: 6px;
-  }
-  .wl-chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 6px 3px 8px;
-    background: var(--primary-soft);
-    border: 1px solid var(--primary);
-    border-radius: 999px;
-    font-size: 11px; font-family: 'JetBrains Mono', monospace;
-  }
-  .wl-chip .x {
-    width: 14px; height: 14px;
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 8px 14px;
+    color: rgba(255,255,255,0.7);
     background: transparent; border: none;
-    color: var(--primary); cursor: pointer; border-radius: 50%;
-    font-size: 12px; line-height: 1;
+    border-radius: 6px;
+    font-size: 13.5px; font-weight: 500;
+    transition: all 0.15s;
   }
-  .wl-chip .x:hover { background: var(--primary); color: #0f1419; }
-  .wl-empty { color: var(--text-dim); font-size: 10.5px; padding: 4px; }
-
-  .toast-container { position: fixed; top: 60px; right: 16px; z-index: 200; display: flex; flex-direction: column; gap: 6px; }
-  .toast {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-left: 3px solid var(--primary); border-radius: 8px;
-    padding: 8px 12px; font-size: 12px; color: var(--text);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4); min-width: 220px;
-    animation: slide-in 0.2s ease;
-  }
-  .toast.error { border-left-color: var(--danger); }
-  .toast.warn { border-left-color: var(--accent); }
-  @keyframes slide-in { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-  /* ===== LOGIN METHOD PICKER (new) ===== */
-  .method-picker {
-    position: fixed; inset: 0; z-index: 500;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
+  .nav-tab:hover { color: white; background: var(--bg-nav-hover); }
+  .nav-tab.active { color: white; background: var(--bg-nav-active); }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px;
     display: grid; place-items: center;
-    animation: fade-in 0.2s;
+    background: transparent; border: none;
+    color: rgba(255,255,255,0.7);
+    border-radius: 6px;
+    transition: all 0.15s;
   }
-  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-  .method-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 24px; max-width: 480px; width: 92%;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  .icon-btn:hover { background: var(--bg-nav-hover); color: white; }
+
+  /* ====== LAYOUT ====== */
+  .page {
+    max-width: 1400px; margin: 0 auto; padding: 24px;
   }
-  .method-card h2 { font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-  .method-card .sub { color: var(--text-soft); font-size: 12px; margin-bottom: 18px; }
-  .method-buttons { display: flex; flex-direction: column; gap: 10px; }
-  .method-btn {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 16px;
-    background: var(--bg-soft);
+  .breadcrumb {
+    color: var(--text-soft); font-size: 13px; margin-bottom: 16px;
+  }
+  .breadcrumb .sep { margin: 0 8px; color: var(--text-dim); }
+  .breadcrumb .current { color: var(--text); font-weight: 500; }
+
+  /* ====== CARD ====== */
+  .card {
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-body { padding: 20px; }
+  .card-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+
+  /* ====== DASHBOARD STATS ====== */
+  .stat-card { padding: 20px; }
+  .stat-label { font-size: 12.5px; color: var(--text-soft); font-weight: 500; }
+  .stat-value {
+    font-size: 32px; font-weight: 600; color: var(--text);
+    margin-top: 8px; font-family: 'Inter', sans-serif;
+  }
+  .stat-sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ====== INSTANCE LIST ====== */
+  .instance-list { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+  .instance-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.15s;
-    font-family: inherit;
-    text-align: left;
-    width: 100%;
   }
-  .method-btn:hover { border-color: var(--primary); background: var(--primary-soft); transform: translateY(-1px); }
-  .method-btn .ico {
-    width: 40px; height: 40px;
-    border-radius: 10px;
-    display: grid; place-items: center;
-    font-size: 18px; flex-shrink: 0;
-  }
-  .method-btn.offline .ico { background: rgba(251, 191, 36, 0.15); color: var(--accent); }
-  .method-btn.microsoft .ico { background: rgba(96, 165, 250, 0.15); color: var(--info); }
-  .method-btn .body { flex: 1; }
-  .method-btn .ttl { font-size: 13px; font-weight: 600; }
-  .method-btn .desc { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
-  .method-card .input { width: 100%; margin-top: 12px; }
-  .method-card .actions { display: flex; gap: 8px; margin-top: 14px; }
-  .method-card .actions .btn-primary { flex: 1; }
-  .method-card .actions .btn-secondary { flex: 0 0 auto; }
-  .method-card .back-btn {
-    background: transparent; border: none; color: var(--text-soft);
-    cursor: pointer; font-family: inherit; font-size: 11.5px;
-    margin-top: 12px; padding: 6px;
-  }
-  .method-card .back-btn:hover { color: var(--text); }
+  .instance-item:hover { border-color: var(--primary); background: #fafbff; }
+  .instance-item.active { border-color: var(--primary); background: var(--primary-soft); }
+  .instance-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .instance-name { font-weight: 500; font-size: 13.5px; }
+  .instance-server { font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono', monospace; }
+  .instance-right { display: flex; align-items: center; gap: 8px; }
 
-  /* ===== DEVICE CODE MODAL ===== */
+  /* ====== STATUS DOT ====== */
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-dim);
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.04);
+  }
+  .status-dot.online { background: var(--success); box-shadow: 0 0 0 2px var(--success-soft); }
+  .status-dot.connecting { background: var(--warning); box-shadow: 0 0 0 2px var(--warning-soft); animation: pulse 1.5s infinite; }
+  .status-dot.waiting { background: var(--info); box-shadow: 0 0 0 2px var(--primary-soft); animation: pulse 1.5s infinite; }
+  .status-dot.error { background: var(--danger); box-shadow: 0 0 0 2px var(--danger-soft); }
+  .status-dot.offline { background: #d1d5db; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .status-text.online { color: var(--success); font-weight: 500; }
+  .status-text.connecting { color: var(--warning); font-weight: 500; }
+  .status-text.waiting { color: var(--info); font-weight: 500; }
+  .status-text.error { color: var(--danger); font-weight: 500; }
+  .status-text.offline { color: var(--text-soft); }
+
+  /* ====== BUTTONS ====== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 14px;
+    font-size: 13px; font-weight: 500;
+    background: white; color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--bg-soft); border-color: #d4d8dd; }
+  .btn-primary {
+    background: var(--primary); color: white; border-color: var(--primary);
+  }
+  .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  .btn-danger { color: var(--danger); }
+  .btn-danger:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+  .btn-ghost { background: transparent; border-color: transparent; }
+  .btn-ghost:hover { background: var(--bg-soft); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-icon { padding: 6px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ====== INPUT ====== */
+  .input, .select {
+    width: 100%;
+    padding: 8px 12px;
+    font-family: inherit; font-size: 13px;
+    color: var(--text);
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .input:focus, .select:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  .label {
+    display: block; font-size: 12.5px; font-weight: 500;
+    color: var(--text-soft); margin-bottom: 6px;
+  }
+  .form-row { margin-bottom: 14px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ====== TERMINAL ====== */
+  .terminal {
+    background: var(--term-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .terminal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: #161618;
+    border-bottom: 1px solid #2a2a2e;
+  }
+  .terminal-tabs { display: flex; align-items: center; gap: 6px; }
+  .terminal-tab {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: #2a2a2e; color: var(--term-muted);
+    border-radius: 4px;
+    font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  }
+  .terminal-tab.active { background: #3a3a40; color: var(--term-text); }
+  .terminal-dots { display: flex; gap: 6px; }
+  .terminal-dot { width: 11px; height: 11px; border-radius: 50%; background: #4a4a52; }
+  .terminal-body {
+    height: 460px;
+    overflow-y: auto;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--term-text);
+  }
+  .terminal-body::-webkit-scrollbar { width: 8px; }
+  .terminal-body::-webkit-scrollbar-thumb { background: #3a3a40; border-radius: 4px; }
+  .terminal-body::-webkit-scrollbar-track { background: transparent; }
+  .term-line { white-space: pre-wrap; word-break: break-all; }
+  .term-line .ts { color: var(--term-muted); margin-right: 8px; font-size: 11.5px; }
+  .term-line.system .msg { color: var(--term-muted); font-style: italic; }
+  .term-line.input .msg { color: var(--term-green); }
+  .term-line.output .msg { color: var(--term-text); }
+  .term-line.error .msg { color: var(--term-red); }
+  .term-line.warn .msg { color: var(--term-yellow); }
+  .term-line.chat .msg { color: var(--term-cyan); }
+  .term-line.devicecode .msg { color: var(--term-yellow); font-weight: 500; }
+  .term-line .cmd { color: var(--term-blue); }
+  .term-input-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px;
+    background: #161618;
+    border-top: 1px solid #2a2a2e;
+  }
+  .term-input-bar .prompt {
+    color: var(--term-green); font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 600;
+  }
+  .term-input {
+    flex: 1;
+    background: transparent; border: none; outline: none;
+    color: var(--term-text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .term-input::placeholder { color: var(--term-muted); }
+
+  /* ====== QUICK ACTION GRID ====== */
+  .actions {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+  }
+  .action {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    padding: 12px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 12px; font-weight: 500;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .action:hover { border-color: var(--primary); background: #fafbff; transform: translateY(-1px); }
+  .action .ico { font-size: 18px; }
+  .action.intern { border-left: 3px solid var(--info); }
+  .action.server { border-left: 3px solid var(--teal); }
+  .action.tp { border-left: 3px solid var(--success); }
+  .action.chat { border-left: 3px solid var(--warning); }
+  .action.danger { border-left: 3px solid var(--danger); }
+  .action.danger:hover { background: var(--danger-soft); border-color: var(--danger); }
+
+  /* ====== WHITELIST ====== */
+  .whitelist {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 12px 16px;
+  }
+  .whitelist-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px;
+    background: var(--success-soft);
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    font-size: 12.5px; font-weight: 500;
+  }
+  .whitelist-item .x {
+    cursor: pointer; color: #059669; font-weight: 700;
+    width: 14px; height: 14px; display: grid; place-items: center;
+    border-radius: 50%;
+  }
+  .whitelist-item .x:hover { background: rgba(0,0,0,0.08); }
+
+  /* ====== MODAL ====== */
   .modal-back {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(6px); z-index: 600;
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
     display: grid; place-items: center;
-    animation: fade-in 0.2s;
+    padding: 20px;
   }
   .modal {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 24px; max-width: 460px; width: 92%;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    background: white; border-radius: var(--radius-lg);
+    width: 100%; max-width: 460px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+    overflow: hidden;
   }
-  .modal h2 { font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-  .modal p { color: var(--text-soft); font-size: 12.5px; margin-bottom: 10px; line-height: 1.5; }
+  .modal-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .modal-body { padding: 20px; }
+  .modal-foot {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-soft);
+    display: flex; justify-content: flex-end; gap: 8px;
+    background: var(--bg-soft);
+  }
+
+  /* ====== DEVICE CODE BOX ====== */
+  .device-box {
+    background: linear-gradient(135deg, #1e3a8a 0%, #5b21b6 100%);
+    color: white; padding: 20px; border-radius: var(--radius);
+    text-align: center; margin: 16px 0;
+  }
+  .device-url { font-size: 13px; opacity: 0.85; margin-bottom: 4px; }
   .device-code {
-    font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 700;
-    letter-spacing: 4px; text-align: center; padding: 16px;
-    background: var(--bg-soft); border: 2px dashed var(--primary);
-    border-radius: 10px; color: var(--primary); margin: 10px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px; font-weight: 700; letter-spacing: 4px;
+    background: rgba(255,255,255,0.15); padding: 12px;
+    border-radius: 6px; margin: 8px 0;
     user-select: all;
   }
-  .device-url {
-    text-align: center; color: var(--info);
-    font-family: 'JetBrains Mono', monospace; font-size: 12px;
-    padding: 6px; background: var(--bg-soft); border-radius: 6px;
-    margin-bottom: 12px; user-select: all;
-  }
-  .device-steps { background: var(--bg-soft); border-radius: 8px; padding: 12px; font-size: 11.5px; }
-  .device-steps ol { margin-left: 18px; }
-  .device-steps li { margin-bottom: 4px; color: var(--text-soft); }
-  .device-steps li strong { color: var(--text); }
-  .modal-actions { display: flex; gap: 6px; margin-top: 14px; }
+  .device-tip { font-size: 12px; opacity: 0.85; margin-top: 8px; }
 
-  /* ===== LOGIN SCREEN (token) ===== */
-  .login-back {
-    position: fixed; inset: 0; z-index: 400;
-    background: var(--bg);
-    background-image:
-      radial-gradient(at 30% 30%, rgba(94, 234, 212, 0.08) 0px, transparent 50%),
-      radial-gradient(at 70% 70%, rgba(251, 191, 36, 0.06) 0px, transparent 50%);
-    display: grid; place-items: center;
+  /* ====== EMPTY STATE ====== */
+  .empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-soft);
   }
-  .login-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 32px; max-width: 380px; width: 92%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  }
-  .login-card h1 { font-size: 22px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; }
-  .login-card h1 .mark {
-    width: 36px; height: 36px; border-radius: 9px;
-    background: linear-gradient(135deg, var(--primary), #2dd4bf);
-    display: grid; place-items: center; color: #0f1419; font-weight: 700;
-  }
-  .login-card .sub { color: var(--text-soft); font-size: 12.5px; margin-bottom: 20px; }
-  .login-card label { display: block; font-size: 10.5px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-  .login-card .input { width: 100%; padding: 10px 12px; margin-bottom: 14px; }
-  .login-card .btn-primary { width: 100%; padding: 10px; font-size: 13px; }
-  .login-card .err { color: var(--danger); font-size: 12px; margin-top: 8px; }
-  .login-card .hint { color: var(--text-dim); font-size: 11px; margin-top: 12px; line-height: 1.5; }
-  .login-card .hint code { background: var(--bg-soft); padding: 1px 5px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; }
+  .empty .ico { font-size: 48px; opacity: 0.4; margin-bottom: 12px; }
+  .empty .title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .empty .sub { font-size: 12.5px; }
 
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .stat-card { background: var(--bg-soft); border: 1px solid var(--border-soft); border-radius: 8px; padding: 10px; }
-  .stat-card .num { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; }
-  .stat-card .num.green { color: var(--success); }
-  .stat-card .num.primary { color: var(--primary); }
-  .stat-card .num.purple { color: var(--purple); }
-  .stat-card .lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+  /* ====== UTIL ====== */
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .col { display: flex; flex-direction: column; gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .hidden { display: none !important; }
+  .text-soft { color: var(--text-soft); }
+  .text-dim { color: var(--text-dim); }
+  .text-sm { font-size: 12px; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+
+  /* ====== MOBILE ====== */
+  @media (max-width: 768px) {
+    .page { padding: 12px; }
+    .card-row { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .navbar { padding: 0 12px; }
+    .nav-left { gap: 12px; }
+    .nav-tab { padding: 6px 10px; font-size: 12px; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ===== LOGIN SCREEN ===== -->
-<div id="login-screen" class="login-back">
-  <div class="login-card">
-    <h1><span class="mark">M</span>MCC 控制台</h1>
-    <p class="sub">Minecraft Console Client · 多账号管理</p>
-    <label>面板 Token</label>
-    <input class="input" id="login-token" placeholder="服务器上: cat /opt/mcc-panel/config/token.txt" />
-    <button class="btn-primary" onclick="doLogin()">登录</button>
-    <div class="err" id="login-err"></div>
-    <div class="hint">
-      Token 存在服务器 <code>config/token.txt</code>。
+<!-- ========== NAVBAR ========== -->
+<div class="navbar">
+  <div class="nav-left">
+    <div class="logo">
+      <span class="logo-box">MCC</span>
+      <span>CONSOLE</span>
     </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="instances">Instances</button>
+      <button class="nav-tab" data-tab="whitelist">Whitelist</button>
+      <button class="nav-tab" data-tab="dashboard">Dashboard</button>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="status text-sm" id="ws-status">
+      <span class="status-dot offline"></span>
+      <span class="status-text offline" style="color: rgba(255,255,255,0.7)">Disconnected</span>
+    </span>
+    <button class="icon-btn" id="btn-refresh" title="Refresh">⟳</button>
   </div>
 </div>
 
-<!-- ===== TOP BAR ===== -->
-<header class="topbar" id="topbar" style="display:none;">
-  <div class="brand">
-    <div class="brand-mark">M</div>
-    <div class="brand-text">
-      <h1>MCC 控制台</h1>
-      <p>Multi-Account · v5</p>
-    </div>
-  </div>
-  <div class="topbar-status">
-    <div class="status-pill">
-      <span class="status-dot" id="dot-active"></span>
-      <span id="status-active">未选择</span>
-    </div>
-    <div class="status-pill">
-      <span class="status-dot" id="dot-ws"></span>
-      <span id="status-ws">未连接</span>
-    </div>
-  </div>
-</header>
+<!-- ========== MAIN ========== -->
+<div class="page">
 
-<div class="app" id="app" style="display:none;">
-
-  <!-- LEFT -->
-  <div class="col col-left">
-    <div class="card">
-      <div class="card-head">
-        <h3><span class="accent-dot"></span>账号</h3>
-        <button class="btn-ghost" onclick="createAccount()">+ 新增</button>
-      </div>
-      <div class="card-body" style="padding:8px;">
-        <div class="acc-list" id="acc-list"></div>
-        <div style="display:flex;gap:5px;margin-top:8px;">
-          <button class="btn-primary" style="flex:1;font-size:11px;padding:6px;" onclick="startAll()">全部启动</button>
-          <button class="btn-secondary" style="font-size:11px;padding:6px;" onclick="stopAll()">全部停止</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-head">
-        <h3><span class="accent-dot"></span>白名单（自动同意传送）</h3>
-      </div>
-      <div class="card-body" style="padding:10px;">
-        <div class="wl-list" id="wl-list">
-          <div class="wl-empty">添加玩家后，他们的 /tpa /tphere 会自动同意</div>
-        </div>
-        <div class="command-row" style="margin-top:0;">
-          <input class="input" id="wl-input" placeholder="玩家名（回车）" />
-          <button class="btn-secondary" onclick="addWhitelist()">添加</button>
-        </div>
-        <div style="font-size:10px;color:var(--text-dim);margin-top:6px;line-height:1.5;">
-          ✦ 白名单内玩家的 <code>/tpa</code> / <code>/tphere</code> → 自动 <code>/tpaccept</code>
-        </div>
-      </div>
-    </div>
+  <!-- Breadcrumb -->
+  <div class="breadcrumb" id="breadcrumb">
+    <span>Control Panel</span>
+    <span class="sep">/</span>
+    <span class="current" id="bc-current">Instances</span>
   </div>
 
-  <!-- MIDDLE -->
-  <div class="col">
-    <div class="card">
-      <div class="card-head">
-        <h3>
-          <span class="accent-dot"></span>
-          <span id="active-title">未选择账号</span>
-        </h3>
-        <div style="display:flex;gap:5px;">
-          <button class="btn-ghost" id="btn-start" onclick="openLoginMethodPicker()" disabled>▶ 启动</button>
-          <button class="btn-ghost" id="btn-stop" onclick="stopActive()" disabled>■ 停止</button>
-        </div>
+  <!-- ========== INSTANCES TAB ========== -->
+  <div id="tab-instances" class="tab-pane">
+
+    <!-- Top: stats row -->
+    <div class="card-row">
+      <div class="card stat-card">
+        <div class="stat-label">Total Instances</div>
+        <div class="stat-value" id="stat-total">0</div>
       </div>
-      <div class="card-body" style="padding:12px;">
-        <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;display:flex;gap:12px;flex-wrap:wrap;">
-          <span><span style="color:var(--info);">■</span> MCC 内部</span>
-          <span><span style="color:var(--primary);">■</span> 服务器</span>
-          <span><span style="color:var(--accent);">■</span> 聊天</span>
-          <span><span style="color:var(--success);">■</span> 传送</span>
-        </div>
-
-        <div class="actions-grid" id="action-grid">
-          <button class="action-btn cmd-internal" data-cmd="/help" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span class="lbl">帮助</span><span class="hint">/help</span>
-          </button>
-          <button class="action-btn cmd-internal" data-cmd="/list" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-            <span class="lbl">玩家列表</span><span class="hint">/list</span>
-          </button>
-          <button class="action-btn cmd-internal" data-cmd="/reconnect" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-            <span class="lbl">重连</span><span class="hint">/reconnect</span>
-          </button>
-          <button class="action-btn cmd-internal" data-cmd="/respawn" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            <span class="lbl">重生</span><span class="hint">/respawn</span>
-          </button>
-
-          <button class="action-btn cmd-server" data-cmd="/home" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M9 21V12h6v9"/></svg>
-            <span class="lbl">回家</span><span class="hint">/home</span>
-          </button>
-          <button class="action-btn cmd-server" data-cmd="/sethome" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span class="lbl">设置家</span><span class="hint">/sethome</span>
-          </button>
-          <button class="action-btn cmd-server" data-cmd="/back" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 0 1 0 8h-4"/></svg>
-            <span class="lbl">回死亡点</span><span class="hint">/back</span>
-          </button>
-          <button class="action-btn cmd-server" data-cmd="/afk" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span class="lbl">挂机</span><span class="hint">/afk</span>
-          </button>
-
-          <button class="action-btn cmd-tp" data-tp-accept="tpa" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            <span class="lbl">同意 TPA</span><span class="hint">/tpaccept</span>
-          </button>
-          <button class="action-btn cmd-tp" data-tp-accept="tphere" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            <span class="lbl">同意 TPHERE</span><span class="hint">/tpaccept</span>
-          </button>
-
-          <button class="action-btn cmd-chat" data-chat-msg="hi 大家好，我是机器人 🤖" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            <span class="lbl">发打招呼</span><span class="hint">chat</span>
-          </button>
-
-          <button class="action-btn cmd-danger" data-cmd="/disconnect" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
-            <span class="lbl">断开</span><span class="hint">/disconnect</span>
-          </button>
-          <button class="action-btn cmd-danger" data-cmd="/quit" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-            <span class="lbl">退出</span><span class="hint">/quit</span>
-          </button>
-        </div>
-
-        <div class="command-row">
-          <input class="input" id="customCmd" placeholder="自定义命令：/开头 MCC 命令，/开头也是服务器命令，无 / 是聊天" disabled />
-          <button class="btn-primary" id="btn-send-cmd" onclick="sendCustom()" disabled>发送</button>
-        </div>
+      <div class="card stat-card">
+        <div class="stat-label">Online</div>
+        <div class="stat-value" id="stat-online" style="color: var(--success)">0</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Connecting</div>
+        <div class="stat-value" id="stat-connecting" style="color: var(--warning)">0</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Whitelisted</div>
+        <div class="stat-value" id="stat-whitelisted">0</div>
       </div>
     </div>
 
-    <div class="card" style="flex:1;">
-      <div class="card-head">
-        <h3><span class="accent-dot"></span>实时输出 <span style="font-size:10px;color:var(--text-dim);text-transform:none;margin-left:6px;">— 当前账号</span></h3>
-        <div style="display:flex;gap:5px;">
-          <button class="btn-ghost" onclick="clearLogs()">清屏</button>
-          <button class="btn-ghost" onclick="toggleAutoScroll()" id="btn-autoscroll">滚动 ON</button>
+    <!-- Two columns: instance list (left) + console (right) -->
+    <div style="display: grid; grid-template-columns: 320px 1fr; gap: 16px;">
+      <!-- Left: instance list -->
+      <div class="card" style="height: fit-content;">
+        <div class="card-header">
+          <span class="card-title">
+            <span>🖥️</span> My Instances
+          </span>
+          <button class="btn btn-sm btn-primary" id="btn-new-instance">+ New</button>
+        </div>
+        <div class="instance-list" id="instance-list">
+          <div class="empty">
+            <div class="ico">📦</div>
+            <div class="title">No instances yet</div>
+            <div class="sub">Click <b>+ New</b> to add one</div>
+          </div>
         </div>
       </div>
-      <div class="console" id="console"></div>
+
+      <!-- Right: console + actions -->
+      <div>
+        <!-- Terminal card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">
+              <span>📺</span> Console
+              <span class="text-soft text-sm" id="console-subtitle" style="margin-left: 8px;">— select an instance</span>
+            </span>
+            <div class="row">
+              <span id="console-status-pill"></span>
+              <button class="btn btn-sm" id="btn-clear-console">Clear</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <div style="padding: 16px;">
+              <div class="terminal">
+                <div class="terminal-header">
+                  <div class="terminal-tabs">
+                    <span class="terminal-tab active" id="term-tab-name">— output</span>
+                  </div>
+                  <div class="terminal-dots">
+                    <span class="terminal-dot" style="background:#f87171"></span>
+                    <span class="terminal-dot" style="background:#facc15"></span>
+                    <span class="terminal-dot" style="background:#4ade80"></span>
+                  </div>
+                </div>
+                <div class="terminal-body" id="console">
+                  <div class="term-line system"><span class="ts">[--:--:--]</span><span class="msg">MCC Console v6 ready. Create or select an instance to begin.</span></div>
+                </div>
+                <div class="term-input-bar">
+                  <span class="prompt" id="term-prompt">›</span>
+                  <input class="term-input" id="cmd-input" placeholder="Type a command and press Enter..." autocomplete="off" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick actions card -->
+        <div class="card" id="actions-card" style="display: none;">
+          <div class="card-header">
+            <span class="card-title">
+              <span>⚡</span> Quick Actions
+            </span>
+            <span class="text-soft text-sm">Click to send</span>
+          </div>
+          <div class="card-body">
+            <!-- MCC internal commands (蓝) -->
+            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">📋 MCC Internal</div>
+            <div class="actions" style="margin-bottom: 14px;">
+              <button class="action intern" data-cmd="/help"><span class="ico">❓</span>help</button>
+              <button class="action intern" data-cmd="/list"><span class="ico">👥</span>list</button>
+              <button class="action intern" data-cmd="/reconnect"><span class="ico">🔄</span>reconnect</button>
+              <button class="action intern" data-cmd="/respawn"><span class="ico">💀</span>respawn</button>
+            </div>
+            <!-- Server commands (青) -->
+            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">🏠 Server Commands</div>
+            <div class="actions" style="margin-bottom: 14px;">
+              <button class="action server" data-cmd="/home"><span class="ico">🏠</span>home</button>
+              <button class="action server" data-cmd="/sethome"><span class="ico">📍</span>sethome</button>
+              <button class="action server" data-cmd="/back"><span class="ico">↩️</span>back</button>
+            </div>
+            <!-- TP commands (绿) -->
+            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">🚪 Teleport (auto-accept also on)</div>
+            <div class="actions" style="margin-bottom: 14px;">
+              <button class="action tp" data-cmd="/tpaccept"><span class="ico">✅</span>accept TPA</button>
+              <button class="action tp" data-cmd="/tpdeny"><span class="ico">❌</span>deny TPA</button>
+            </div>
+            <!-- Chat (黄) -->
+            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">💬 Chat (no slash = chat)</div>
+            <div class="actions" style="margin-bottom: 14px;">
+              <button class="action chat" data-chat="Hi!"><span class="ico">👋</span>Hi!</button>
+              <button class="action chat" data-chat="brb"><span class="ico">⏸️</span>brb</button>
+              <button class="action chat" data-chat="afk"><span class="ico">💤</span>afk</button>
+            </div>
+            <!-- Danger (红) -->
+            <div class="text-soft text-sm" style="margin-bottom: 6px; font-weight: 500;">⚠️ Danger</div>
+            <div class="actions">
+              <button class="action danger" data-cmd="/disconnect"><span class="ico">🔌</span>disconnect</button>
+              <button class="action danger" data-cmd="/quit"><span class="ico">⏹️</span>quit</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- RIGHT -->
-  <div class="col col-right">
+  <!-- ========== WHITELIST TAB ========== -->
+  <div id="tab-whitelist" class="tab-pane hidden">
     <div class="card">
-      <div class="card-head"><h3><span class="accent-dot"></span>服务器</h3></div>
+      <div class="card-header">
+        <span class="card-title">
+          <span>📜</span> Whitelist
+          <span class="text-soft text-sm" style="margin-left: 8px;">Players whose /tpa &amp; /tphere will be auto-accepted</span>
+        </span>
+        <span class="text-soft text-sm" id="whitelist-count">0 players</span>
+      </div>
       <div class="card-body">
-        <div class="form-row"><label>昵称</label><input class="input" id="cfg-name" placeholder="主号" /></div>
-        <div class="form-row"><label>服务器 IP</label><input class="input" id="cfg-host" placeholder="mc.example.com" /></div>
-        <div class="form-row"><label>端口</label><input class="input" id="cfg-port" value="25565" /></div>
-        <div class="form-row"><label>版本（留空自动）</label><input class="input" id="cfg-version" placeholder="1.20.4" /></div>
-        <button class="btn-secondary" style="width:100%;margin-top:6px;" onclick="saveCurrent()">保存</button>
+        <div class="row" style="gap: 8px; margin-bottom: 12px;">
+          <input class="input" id="wl-input" placeholder="Player name (e.g. Steve)" style="flex: 1;" />
+          <button class="btn btn-primary" id="btn-wl-add">+ Add</button>
+        </div>
+        <div class="whitelist" id="whitelist-list"></div>
+        <div class="text-soft text-sm mt-16">
+          <b>How it works:</b> when an instance is online, the panel scans MCC output for TPA/TPHERE requests from these names and auto-replies with <code class="mono">/tpaccept</code> after 150ms.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== DASHBOARD TAB ========== -->
+  <div id="tab-dashboard" class="tab-pane hidden">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📊 System Info</span>
+      </div>
+      <div class="card-body">
+        <div class="card-row" style="grid-template-columns: repeat(3, 1fr);">
+          <div><div class="stat-label">Node.js</div><div class="mono mt-8" id="d-node">--</div></div>
+          <div><div class="stat-label">Panel Version</div><div class="mono mt-8" id="d-ver">v6.0</div></div>
+          <div><div class="stat-label">MCC Binary</div><div class="mono mt-8" id="d-mcc">/opt/mcc-panel/Minecraft-Console-Client/MinecraftClient</div></div>
+          <div><div class="stat-label">Uptime</div><div class="mono mt-8" id="d-uptime">--</div></div>
+          <div><div class="stat-label">Memory</div><div class="mono mt-8" id="d-mem">--</div></div>
+          <div><div class="stat-label">Total Logs</div><div class="mono mt-8" id="d-logs">--</div></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-head"><h3><span class="accent-dot"></span>机器人</h3></div>
+      <div class="card-header">
+        <span class="card-title">ℹ️ MCC Command Reference</span>
+      </div>
       <div class="card-body">
+        <div class="text-sm" style="line-height: 1.8;">
+          <div><code class="mono">/command</code> <span class="text-soft">→ MCC internal command (e.g. <code>/help</code>, <code>/list</code>)</span></div>
+          <div><code class="mono">/command</code> <span class="text-soft">→ Some <code>/</code> commands are sent to the MC server (e.g. <code>/home</code>, <code>/sethome</code>)</span></div>
+          <div><code class="mono">text</code> <span class="text-soft">→ Plain text (no slash) is sent as chat message</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== MODAL: NEW INSTANCE ========== -->
+<div class="modal-back hidden" id="modal-new">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">+ New Instance</div>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-new')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="label">Display Name</label>
+        <input class="input" id="new-name" placeholder="e.g. Main Bot" />
+      </div>
+      <div class="form-grid">
         <div class="form-row">
-          <label class="check"><input type="checkbox" id="bot-autoreconnect" checked /> 断线自动重连</label>
-          <label class="check"><input type="checkbox" id="bot-antiafk" checked /> 防 AFK</label>
-          <label class="check"><input type="checkbox" id="bot-logchat" checked /> 记录聊天</label>
-          <label class="check"><input type="checkbox" id="bot-autotp" checked /> 白名单自动 /tpaccept</label>
+          <label class="label">Server IP / Host</label>
+          <input class="input" id="new-host" placeholder="e.g. mc.hypixel.net" />
         </div>
-        <button class="btn-secondary" style="width:100%;margin-top:6px;" onclick="saveCurrent()">保存</button>
+        <div class="form-row">
+          <label class="label">Port</label>
+          <input class="input" id="new-port" placeholder="25565" value="25565" />
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="label">Player Name (offline / display name)</label>
+        <input class="input" id="new-player" placeholder="e.g. SteveBot" />
+      </div>
+      <div class="form-row">
+        <label class="label">Options</label>
+        <div class="row gap-12">
+          <label class="row" style="gap: 6px;"><input type="checkbox" id="new-antiafk" /> <span class="text-sm">Anti-AFK</span></label>
+          <label class="row" style="gap: 6px;"><input type="checkbox" id="new-chatlog" checked /> <span class="text-sm">Chat Log</span></label>
+        </div>
       </div>
     </div>
+    <div class="modal-foot">
+      <button class="btn" onclick="closeModal('modal-new')">Cancel</button>
+      <button class="btn btn-primary" id="btn-create-instance">Create</button>
+    </div>
+  </div>
+</div>
 
-    <div class="card">
-      <div class="card-head"><h3><span class="accent-dot"></span>状态</h3></div>
-      <div class="card-body">
-        <div class="stat-grid">
-          <div class="stat-card">
-            <div class="num primary" id="stat-msgs">0</div>
-            <div class="lbl">收到消息</div>
-          </div>
-          <div class="stat-card">
-            <div class="num purple" id="stat-cmds">0</div>
-            <div class="lbl">发出命令</div>
-          </div>
-          <div class="stat-card">
-            <div class="num green" id="stat-tp">0</div>
-            <div class="lbl">自动同意传送</div>
-          </div>
-          <div class="stat-card">
-            <div class="num" id="stat-uptime" style="color:var(--text-soft);font-size:13px;">--:--</div>
-            <div class="lbl">运行时长</div>
-          </div>
+<!-- ========== MODAL: LOGIN METHOD ========== -->
+<div class="modal-back hidden" id="modal-login-method">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Login Method</div>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-login-method')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="text-soft text-sm" style="margin-bottom: 14px;">Choose how <b id="lm-name">this instance</b> will authenticate with Mojang / Microsoft.</div>
+
+      <button class="action intern" id="btn-method-offline" style="width: 100%; padding: 16px; flex-direction: row; gap: 12px; justify-content: flex-start; margin-bottom: 10px;">
+        <span style="font-size: 24px;">⚡</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 600;">Offline Login</div>
+          <div class="text-soft text-sm" style="font-weight: 400;">Connect without authentication (offline-mode servers only)</div>
         </div>
+      </button>
+
+      <button class="action server" id="btn-method-microsoft" style="width: 100%; padding: 16px; flex-direction: row; gap: 12px; justify-content: flex-start;">
+        <span style="font-size: 24px;">🔵</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 600;">Microsoft Account</div>
+          <div class="text-soft text-sm" style="font-weight: 400;">Sign in via microsoft.com/link (device code flow)</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL: DEVICE CODE ========== -->
+<div class="modal-back hidden" id="modal-device">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-head">
+      <div class="modal-title">🔐 Microsoft Sign-In</div>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-device')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="text-soft text-sm" style="margin-bottom: 12px;">
+        Open this URL in any browser, then enter the code below to sign in:
+      </div>
+      <div class="device-box">
+        <div class="device-url" id="dev-url">https://microsoft.com/link</div>
+        <div class="device-code" id="dev-code">--------</div>
+        <div class="device-tip">Code is valid for 15 minutes</div>
+      </div>
+      <div class="text-soft text-sm" style="text-align: center;">
+        Waiting for sign-in... this dialog will close automatically once completed.
       </div>
     </div>
   </div>
 </div>
 
-<div class="toast-container" id="toast-container"></div>
-<div id="modal-root"></div>
+<!-- ========== MODAL: EDIT INSTANCE ========== -->
+<div class="modal-back hidden" id="modal-edit">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Edit Instance</div>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal('modal-edit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id" />
+      <div class="form-row">
+        <label class="label">Display Name</label>
+        <input class="input" id="edit-name" />
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="label">Server Host</label>
+          <input class="input" id="edit-host" />
+        </div>
+        <div class="form-row">
+          <label class="label">Port</label>
+          <input class="input" id="edit-port" />
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="label">Player Name</label>
+        <input class="input" id="edit-player" />
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="btn-delete-instance">Delete</button>
+      <div style="flex: 1;"></div>
+      <button class="btn" onclick="closeModal('modal-edit')">Cancel</button>
+      <button class="btn btn-primary" id="btn-save-edit">Save</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ============================================================
 // STATE
 // ============================================================
 const state = {
-  token: null,
-  accounts: [],
-  active: null,
-  whitelist: [],
-  autoScroll: true,
-  msgs: 0, cmds: 0, tp: 0, uptime: 0,
-  uptimeTimer: null,
   ws: null,
-  reconnectAttempt: 0,
-  pendingLogin: null  // account awaiting login method
+  accounts: [],
+  whitelist: [],
+  active: null,
+  consoleLines: {},   // accountId -> array of lines
+  serverStart: Date.now(),
 };
 
-const consoleEl = document.getElementById('console');
-
 // ============================================================
-// LOGGING
+// API HELPERS
 // ============================================================
-function log(tag, msg) {
-  const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-  const line = document.createElement('div');
-  line.className = 'log-line';
-  line.innerHTML = `<span class="log-time">${time}</span><span class="log-tag ${tag}">${tag.toUpperCase()}</span><span class="log-msg">${formatMsg(msg)}</span>`;
-  consoleEl.appendChild(line);
-  if (state.autoScroll) consoleEl.scrollTop = consoleEl.scrollHeight;
-  if (consoleEl.children.length > 2000) consoleEl.removeChild(consoleEl.firstChild);
-  if (tag === 'chat') { state.msgs++; document.getElementById('stat-msgs').textContent = state.msgs; }
-  if (tag === 'cmd')  { state.cmds++; document.getElementById('stat-cmds').textContent = state.cmds; }
-  if (tag === 'tp')   { state.tp++; document.getElementById('stat-tp').textContent = state.tp; }
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('/api' + path, opts);
+  if (!r.ok) throw new Error('API ' + r.status);
+  return r.json();
 }
-function formatMsg(text) {
-  return String(text)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/<(\w+)>/g, '<span class="mention">$1</span>')
-    .replace(/\[(\w+)\]/g, '<span class="player">$1</span>');
-}
-function clearLogs() {
-  consoleEl.innerHTML = '';
-  state.msgs = 0; state.cmds = 0; state.tp = 0;
-  document.getElementById('stat-msgs').textContent = 0;
-  document.getElementById('stat-cmds').textContent = 0;
-  document.getElementById('stat-tp').textContent = 0;
-}
-function toggleAutoScroll() {
-  state.autoScroll = !state.autoScroll;
-  document.getElementById('btn-autoscroll').textContent = state.autoScroll ? '滚动 ON' : '滚动 OFF';
-}
-function toast(msg, type='info', duration=3000) {
-  const t = document.createElement('div');
-  t.className = 'toast' + (type !== 'info' ? ' ' + type : '');
-  t.textContent = msg;
-  document.getElementById('toast-container').appendChild(t);
-  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(), 200); }, duration);
-}
-function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ============================================================
 // WEBSOCKET
 // ============================================================
-function connectWS(token) {
-  if (state.ws) { try { state.ws.close(); } catch {} state.ws = null; }
+function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const url = `${proto}://${location.host}/ws?token=${encodeURIComponent(token)}`;
-  log('system', '→ 连接后端...');
-  const ws = new WebSocket(url);
-  state.ws = ws;
-  ws.onopen = () => {
-    state.reconnectAttempt = 0;
-    log('system', '✓ 已连接后端');
-    document.getElementById('dot-ws').className = 'status-dot online';
-    document.getElementById('status-ws').textContent = '已连接';
+  state.ws = new WebSocket(`${proto}://${location.host}/ws?token=no-login`);
+  state.ws.onopen = () => {
+    document.getElementById('ws-status').innerHTML = '<span class="status-dot online"></span><span class="status-text online" style="color: rgba(255,255,255,0.95)">Connected</span>';
   };
-  ws.onclose = () => {
-    document.getElementById('dot-ws').className = 'status-dot offline';
-    document.getElementById('status-ws').textContent = '未连接';
-    log('error', '✗ 与后端断开');
-    if (state.token) {
-      state.reconnectAttempt++;
-      const delay = Math.min(2000 + state.reconnectAttempt * 1000, 10000);
-      log('system', `${delay/1000}秒后重连...`);
-      setTimeout(() => connectWS(state.token), delay);
-    }
+  state.ws.onclose = () => {
+    document.getElementById('ws-status').innerHTML = '<span class="status-dot offline"></span><span class="status-text offline" style="color: rgba(255,255,255,0.7)">Disconnected</span>';
+    setTimeout(connectWS, 3000);
   };
-  ws.onerror = () => log('error', 'WebSocket 错误');
-  ws.onmessage = (e) => {
-    let msg;
-    try { msg = JSON.parse(e.data); } catch { return; }
-    handleBackendMsg(msg);
+  state.ws.onerror = () => state.ws.close();
+  state.ws.onmessage = (e) => {
+    let msg; try { msg = JSON.parse(e.data); } catch { return; }
+    handleWSMessage(msg);
   };
-}
-function sendWS(obj) {
-  if (!state.ws || state.ws.readyState !== 1) { toast('未连接到后端', 'warn'); return false; }
-  state.ws.send(JSON.stringify(obj));
-  return true;
 }
 
-function handleBackendMsg(msg) {
+function handleWSMessage(msg) {
   switch (msg.type) {
-    case 'hello':
-      state.accounts = msg.accounts || [];
-      state.whitelist = msg.whitelist || [];
-      renderAccounts();
-      renderWhitelist();
-      if (!state.active && state.accounts.length > 0) selectAccount(state.accounts[0].id);
-      log('system', `✓ 后端就绪 · ${state.accounts.length} 账号 · 白名单 ${state.whitelist.length} 人`);
-      break;
     case 'accounts':
       state.accounts = msg.accounts || [];
-      renderAccounts();
-      if (state.active && !state.accounts.find(a => a.id === state.active)) {
-        state.active = state.accounts[0]?.id || null;
-        if (state.active) selectAccount(state.active);
-      }
+      renderInstances();
+      updateStats();
       break;
-    case 'output':
-      if (msg.accountId === state.active) routeOutput(msg.data);
-      updateAccountStatusFromOutput(msg.accountId, msg.data);
+    case 'log':
+      appendLog(msg.accountId, msg.line, msg.level || 'output');
       break;
     case 'device-code':
-      showDeviceCode(msg.accountId, msg.code, msg.url);
+      showDeviceCode(msg.url, msg.code);
       break;
-    case 'account-status': {
-      const a = state.accounts.find(x => x.id === msg.id);
-      if (a) { a.status = msg.status; renderAccounts(); updateActionStates(); updateTopStatus(); }
-      break;
-    }
-    case 'whitelist-update':
-      state.whitelist = msg.whitelist || [];
-      renderWhitelist();
-      break;
-    case 'tp-auto':
-      if (msg.accountId === state.active) log('tp', `🤖 白名单 ${msg.player} → 自动 /tpaccept (${msg.kind.toUpperCase()})`);
-      break;
-    case 'error':
-      log('error', msg.msg);
-      toast(msg.msg, 'error');
+    case 'status':
+      updateAccountStatus(msg.accountId, msg.status);
       break;
   }
 }
-
-function routeOutput(raw) {
-  const lines = raw.split(/[\r\n]+/).filter(l => l.trim());
-  for (const line of lines) {
-    const l = line.trim();
-    if (!l) continue;
-    if (/has requested to teleport to you|wants to teleport to you/i.test(l)) log('tp', '📩 ' + l);
-    else if (/has requested that you teleport|requested you to teleport/i.test(l)) log('tp', '📩 ' + l);
-    else if (/accepted your teleport request/i.test(l)) log('tp', '✅ ' + l);
-    else if (/^\[\d+:\d+:\d+\] \[CHAT\]/.test(l) || (l.startsWith('<') && l.includes('>'))) {
-      log('chat', l.replace(/^\[\d+:\d+:\d+\] \[CHAT\]\s*/i, ''));
-    } else if (l.startsWith('>')) {
-      // command echo, skip
-    } else if (/error|fail|exception|cannot/i.test(l)) log('error', l);
-    else if (/warn|注意/i.test(l)) log('warn', l);
-    else log('info', l);
-  }
-}
-
-function updateAccountStatusFromOutput(accountId, data) {
-  const a = state.accounts.find(x => x.id === accountId);
-  if (!a) return;
-  if (/Logged in|session.+started|joined the game/i.test(data)) {
-    if (a.status !== 'online') { a.status = 'online'; renderAccounts(); updateActionStates(); updateTopStatus(); }
-  } else if (/Disconnect|Connection lost|kicked|Disconnected/i.test(data) && a.status === 'online') {
-    a.status = 'connecting';
-    renderAccounts(); updateActionStates(); updateTopStatus();
-  } else if (/https:\/\/microsoft.com\/link|device code|To sign in/i.test(data)) {
-    a.status = 'waiting';
-    renderAccounts(); updateActionStates(); updateTopStatus();
-  } else if (/Unable to authenticate|Authentication failed|Invalid credentials/i.test(data)) {
-    a.status = 'error';
-    renderAccounts(); updateActionStates(); updateTopStatus();
-  }
-}
-
-// ============================================================
-// ACCOUNTS
-// ============================================================
-function renderAccounts() {
-  const el = document.getElementById('acc-list');
-  if (state.accounts.length === 0) {
-    el.innerHTML = '<div style="color:var(--text-dim);font-size:10.5px;padding:8px;text-align:center;">还没有账号，点「+ 新增」</div>';
-    return;
-  }
-  el.innerHTML = state.accounts.map(a => `
-    <div class="acc-item ${state.active === a.id ? 'active' : ''}" data-id="${a.id}">
-      <div class="acc-status-dot ${a.status}"></div>
-      <div class="acc-info">
-        <div class="acc-name">${escapeHtml(a.name || '未命名')}</div>
-        <div class="acc-meta">${escapeHtml(a.user || '未配置')} · ${a.status}</div>
-      </div>
-    </div>
-  `).join('');
-  el.querySelectorAll('.acc-item').forEach(item => {
-    item.addEventListener('click', () => selectAccount(item.dataset.id));
-  });
-}
-
-function selectAccount(id) {
-  if (state.active === id) return;
-  state.active = id;
-  state.msgs = 0; state.cmds = 0; state.tp = 0; state.uptime = 0;
-  document.getElementById('stat-msgs').textContent = 0;
-  document.getElementById('stat-cmds').textContent = 0;
-  document.getElementById('stat-tp').textContent = 0;
-  document.getElementById('stat-uptime').textContent = '--:--';
-  if (state.uptimeTimer) clearInterval(state.uptimeTimer);
-
-  const a = state.accounts.find(x => x.id === id);
-  if (a) {
-    document.getElementById('active-title').textContent = a.name + ' › ' + (a.user || '未配置');
-    document.getElementById('cfg-name').value = a.name || '';
-    document.getElementById('cfg-host').value = a.host || '';
-    document.getElementById('cfg-port').value = a.port || '25565';
-    document.getElementById('cfg-version').value = a.version || '';
-    document.getElementById('bot-autoreconnect').checked = a.bots?.autoreconnect !== false;
-    document.getElementById('bot-antiafk').checked = a.bots?.antiafk !== false;
-    document.getElementById('bot-logchat').checked = a.bots?.logchat !== false;
-    document.getElementById('bot-autotp').checked = a.bots?.autotp !== false;
-    clearLogs();
-    log('system', `已切换到账号: ${a.name}`);
-    if (a.status === 'online') log('info', '账号在线中...');
-  }
-  renderAccounts();
-  updateActionStates();
-  updateTopStatus();
-  startUptimeTimer();
-}
-
-function updateActionStates() {
-  const a = state.accounts.find(x => x.id === state.active);
-  const online = a && a.status === 'online';
-  document.querySelectorAll('.action-btn').forEach(b => b.disabled = !online);
-  document.getElementById('customCmd').disabled = !online;
-  document.getElementById('btn-send-cmd').disabled = !online;
-  document.getElementById('btn-start').disabled = !a || ['online','connecting','waiting'].includes(a.status);
-  document.getElementById('btn-stop').disabled = !a || a.status === 'offline';
-}
-
-function updateTopStatus() {
-  const a = state.accounts.find(x => x.id === state.active);
-  const dot = document.getElementById('dot-active');
-  const txt = document.getElementById('status-active');
-  if (!a) { dot.className = 'status-dot'; txt.textContent = '未选择'; return; }
-  dot.className = 'status-dot ' + a.status;
-  const map = { 'offline': '离线', 'connecting': '连接中', 'online': '在线 ✓', 'error': '错误', 'waiting': '等待登录' };
-  txt.textContent = `${a.name} · ${map[a.status] || a.status}`;
-}
-
-function createAccount() {
-  if (!state.active) {
-    sendWS({ type: 'create-account' });
-    return;
-  }
-  sendWS({ type: 'create-account' });
-}
-
-function startActive() {
-  // Now opens login method picker instead of starting directly
-  openLoginMethodPicker();
-}
-
-function stopActive() {
-  const a = state.accounts.find(x => x.id === state.active);
-  if (!a) return;
-  sendWS({ type: 'stop-account', id: a.id });
-}
-
-function startAll() {
-  // Start all in default offline mode (fastest, no device code popup)
-  sendWS({ type: 'start-all', method: 'offline' });
-}
-
-function stopAll() { sendWS({ type: 'stop-all' }); }
-
-function saveCurrent() {
-  const a = state.accounts.find(x => x.id === state.active);
-  if (!a) { toast('先选一个账号', 'warn'); return; }
-  a.name = document.getElementById('cfg-name').value || a.name;
-  a.host = document.getElementById('cfg-host').value;
-  a.port = document.getElementById('cfg-port').value;
-  a.version = document.getElementById('cfg-version').value;
-  a.bots = {
-    autoreconnect: document.getElementById('bot-autoreconnect').checked,
-    antiafk: document.getElementById('bot-antiafk').checked,
-    logchat: document.getElementById('bot-logchat').checked,
-    autotp: document.getElementById('bot-autotp').checked,
-  };
-  sendWS({ type: 'update-account', account: a });
-  document.getElementById('active-title').textContent = a.name + ' › ' + (a.user || '未配置');
-  renderAccounts();
-  log('system', '已保存');
-  toast('已保存');
-}
-
-function startUptimeTimer() {
-  if (state.uptimeTimer) clearInterval(state.uptimeTimer);
-  state.uptimeTimer = setInterval(() => {
-    const a = state.accounts.find(x => x.id === state.active);
-    if (a && a.status === 'online') {
-      state.uptime++;
-      const h = String(Math.floor(state.uptime / 3600)).padStart(2, '0');
-      const m = String(Math.floor((state.uptime % 3600) / 60)).padStart(2, '0');
-      const s = String(state.uptime % 60).padStart(2, '0');
-      document.getElementById('stat-uptime').textContent = `${h}:${m}:${s}`;
-    }
-  }, 1000);
-}
-
-// ============================================================
-// LOGIN METHOD PICKER (v5 NEW)
-// ============================================================
-function openLoginMethodPicker() {
-  const a = state.accounts.find(x => x.id === state.active);
-  if (!a) { toast('请先选择一个账号', 'warn'); return; }
-  if (!a.host) { toast('请先在右侧填服务器 IP', 'warn'); return; }
-
-  state.pendingLogin = a;
-  showMethodPicker();
-}
-
-function showMethodPicker() {
-  // Pick which method - first screen
-  const root = document.getElementById('modal-root');
-  const a = state.pendingLogin;
-  root.innerHTML = `
-    <div class="method-picker" onclick="if(event.target===this) closeMethodPicker()">
-      <div class="method-card">
-        <h2>👤 ${escapeHtml(a.name)} · 选择登录方式</h2>
-        <div class="sub">服务器：<code>${escapeHtml(a.host || '')}:${escapeHtml(a.port || '')}</code></div>
-        <div class="method-buttons">
-          <button class="method-btn offline" onclick="showOfflineForm()">
-            <div class="ico">⚡</div>
-            <div class="body">
-              <div class="ttl">离线模式登录</div>
-              <div class="desc">输入任意玩家名，无需密码</div>
-            </div>
-          </button>
-          <button class="method-btn microsoft" onclick="startMicrosoftLogin()">
-            <div class="ico">🔵</div>
-            <div class="body">
-              <div class="ttl">微软账号登录</div>
-              <div class="desc">MCC 弹出 microsoft.com/link，输入代码授权</div>
-            </div>
-          </button>
-        </div>
-        <button class="back-btn" onclick="closeMethodPicker()">取消</button>
-      </div>
-    </div>
-  `;
-}
-
-function showOfflineForm() {
-  const a = state.pendingLogin;
-  const root = document.getElementById('modal-root');
-  root.innerHTML = `
-    <div class="method-picker" onclick="if(event.target===this) closeMethodPicker()">
-      <div class="method-card">
-        <h2>⚡ 离线模式登录</h2>
-        <div class="sub">${escapeHtml(a.name)} → ${escapeHtml(a.host || '')}:${escapeHtml(a.port || '')}</div>
-        <label style="font-size:10.5px;color:var(--text-soft);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-top:8px;">玩家名</label>
-        <input class="input" id="offline-name" placeholder="输入玩家名" value="${escapeHtml(a.user || '')}" autocomplete="off" />
-        <div style="font-size:11px;color:var(--text-dim);margin-top:8px;line-height:1.5;">
-          ⚠ 离线模式服务器可能拒绝（如果该服务器要求正版验证）
-        </div>
-        <div class="actions">
-          <button class="btn-primary" onclick="confirmOffline()">启动 MCC</button>
-          <button class="btn-secondary" onclick="showMethodPicker()">返回</button>
-        </div>
-      </div>
-    </div>
-  `;
-  setTimeout(() => document.getElementById('offline-name').focus(), 50);
-}
-
-function confirmOffline() {
-  const name = document.getElementById('offline-name').value.trim();
-  if (!name) { toast('请输入玩家名', 'warn'); return; }
-  const a = state.pendingLogin;
-  // Save the username to the account
-  a.user = name;
-  a.auth = 'offline';
-  sendWS({ type: 'update-account', account: a });
-  // Now start MCC
-  a.status = 'connecting';
-  renderAccounts(); updateActionStates(); updateTopStatus();
-  sendWS({ type: 'start-account', id: a.id });
-  closeMethodPicker();
-  log('system', `→ 启动 MCC (离线): ${name}`);
-}
-
-function startMicrosoftLogin() {
-  const a = state.pendingLogin;
-  if (!a.user) { toast('请先在右侧填邮箱/玩家名', 'warn'); closeMethodPicker(); return; }
-  // Set auth to microsoft and start
-  a.auth = 'microsoft';
-  sendWS({ type: 'update-account', account: a });
-  a.status = 'connecting';
-  renderAccounts(); updateActionStates(); updateTopStatus();
-  sendWS({ type: 'start-account', id: a.id });
-  closeMethodPicker();
-  log('system', '→ 启动 MCC (微软) · 等待设备码...');
-  toast('MCC 正在拉取设备码', 'info', 4000);
-}
-
-function closeMethodPicker() {
-  document.getElementById('modal-root').innerHTML = '';
-  state.pendingLogin = null;
-}
-
-// ============================================================
-// COMMANDS
-// ============================================================
-function sendCmd(text) {
-  if (!text || !text.trim()) return;
-  const a = state.accounts.find(x => x.id === state.active);
-  if (!a) { toast('没选账号', 'warn'); return; }
-  if (a.status !== 'online') { toast('账号未连接', 'warn'); return; }
-  log('cmd', '> ' + text);
-  sendWS({ type: 'cmd', accountId: a.id, text });
-}
-function sendCustom() {
-  const v = document.getElementById('customCmd').value.trim();
-  if (!v) return;
-  sendCmd(v);
-  document.getElementById('customCmd').value = '';
-}
-document.getElementById('customCmd').addEventListener('keydown', e => { if (e.key === 'Enter') sendCustom(); });
-
-document.querySelectorAll('.action-btn').forEach(b => {
-  b.addEventListener('click', () => {
-    const cmd = b.dataset.cmd;
-    const chatMsg = b.dataset.chatMsg;
-    const tpAccept = b.dataset.tpAccept;
-    if (cmd) sendCmd(cmd);
-    if (chatMsg) sendCmd(chatMsg);
-    if (tpAccept) sendCmd('/tpaccept');
-  });
-});
-
-// ============================================================
-// WHITELIST
-// ============================================================
-function renderWhitelist() {
-  const el = document.getElementById('wl-list');
-  if (state.whitelist.length === 0) {
-    el.innerHTML = '<div class="wl-empty">添加玩家后，他们的 /tpa /tphere 会自动同意</div>';
-    return;
-  }
-  el.innerHTML = state.whitelist.map(p =>
-    `<span class="wl-chip">${escapeHtml(p)}<button class="x" onclick="removeWhitelist('${escapeHtml(p)}')">×</button></span>`
-  ).join('');
-}
-function addWhitelist() {
-  const v = document.getElementById('wl-input').value.trim();
-  if (!v) return;
-  if (state.whitelist.includes(v)) { toast('已在白名单', 'warn'); return; }
-  state.whitelist.push(v);
-  sendWS({ type: 'whitelist-set', whitelist: state.whitelist });
-  document.getElementById('wl-input').value = '';
-  toast(`已加 ${v}`);
-}
-function removeWhitelist(p) {
-  state.whitelist = state.whitelist.filter(x => x !== p);
-  sendWS({ type: 'whitelist-set', whitelist: state.whitelist });
-  toast(`已移除 ${p}`);
-}
-document.getElementById('wl-input').addEventListener('keydown', e => { if (e.key === 'Enter') addWhitelist(); });
-
-// ============================================================
-// DEVICE CODE MODAL
-// ============================================================
-function showDeviceCode(accountId, code, url) {
-  const a = state.accounts.find(x => x.id === accountId);
-  const root = document.getElementById('modal-root');
-  root.innerHTML = `
-    <div class="modal-back" onclick="if(event.target===this) closeModal()">
-      <div class="modal">
-        <h2>🔐 微软账号登录</h2>
-        <p>账号 <strong style="color:var(--primary);">${escapeHtml(a?.name || '')}</strong> · 浏览器打开下面的链接，输入代码授权：</p>
-        <div class="device-code">${escapeHtml(code)}</div>
-        <div class="device-url">👉 ${escapeHtml(url || 'https://microsoft.com/link')}</div>
-        <div class="device-steps">
-          <ol>
-            <li>用电脑/手机浏览器<strong>打开上面网址</strong></li>
-            <li>登录<strong>购买 Minecraft 的微软账号</strong></li>
-            <li>输入代码 <strong>${escapeHtml(code)}</strong></li>
-            <li>点<strong>「允许」</strong></li>
-            <li>登录完成自动继续</li>
-          </ol>
-        </div>
-        <div class="modal-actions">
-          <button class="btn-primary" style="flex:1;" onclick="copyText('${escapeHtml(code)}')">复制代码</button>
-          <button class="btn-secondary" onclick="copyText('${escapeHtml(url || 'https://microsoft.com/link')}')">复制网址</button>
-          <button class="btn-secondary" onclick="closeModal()">关闭</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
-function copyText(t) { navigator.clipboard.writeText(t).then(() => toast('已复制: ' + t)); }
-
-// ============================================================
-// LOGIN
-// ============================================================
-function doLogin() {
-  const t = document.getElementById('login-token').value.trim();
-  if (!t) { document.getElementById('login-err').textContent = '请输入 Token'; return; }
-  state.token = t;
-  localStorage.setItem('mcc-token', t);
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('topbar').style.display = 'flex';
-  document.getElementById('app').style.display = 'grid';
-  connectWS(t);
-  fetch('/api/status').then(r => r.json()).then(data => {
-    if (data.accounts) {
-      state.accounts = data.accounts;
-      state.whitelist = data.whitelist || [];
-      renderAccounts();
-      renderWhitelist();
-      if (!state.active && state.accounts.length > 0) selectAccount(state.accounts[0].id);
-    }
-  }).catch(() => {});
-}
-document.getElementById('login-token').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 // ============================================================
 // INIT
 // ============================================================
-const savedToken = localStorage.getItem('mcc-token');
-if (savedToken) document.getElementById('login-token').value = savedToken;
-log('system', 'MCC 控制台 v5 已加载');
+async function init() {
+  try {
+    const data = await api('/status');
+    state.accounts = data.accounts || [];
+    state.whitelist = data.whitelist || [];
+    state.serverStart = data.serverStart || Date.now();
+    renderInstances();
+    renderWhitelist();
+    updateStats();
+    if (data.system) {
+      document.getElementById('d-node').textContent = data.system.node || '--';
+      document.getElementById('d-mem').textContent = data.system.memory || '--';
+      document.getElementById('d-logs').textContent = data.system.logs || '--';
+    }
+    startUtimeCounter();
+  } catch (e) {
+    console.error(e);
+  }
+  connectWS();
+  setupUI();
+  log('system', 'MCC Console v6 loaded');
+}
+
+function startUtimeCounter() {
+  setInterval(() => {
+    const s = Math.floor((Date.now() - state.serverStart) / 1000);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    document.getElementById('d-uptime').textContent = `${h}h ${m}m ${sec}s`;
+  }, 1000);
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function renderInstances() {
+  const list = document.getElementById('instance-list');
+  if (state.accounts.length === 0) {
+    list.innerHTML = '<div class="empty"><div class="ico">📦</div><div class="title">No instances yet</div><div class="sub">Click <b>+ New</b> to add one</div></div>';
+    document.getElementById('actions-card').style.display = 'none';
+    return;
+  }
+  list.innerHTML = state.accounts.map(a => {
+    const isActive = state.active === a.id;
+    const stClass = a.status || 'offline';
+    return `
+      <div class="instance-item ${isActive ? 'active' : ''}" data-id="${a.id}">
+        <div class="instance-left">
+          <div>
+            <div class="instance-name">${escapeHtml(a.name)}</div>
+            <div class="instance-server">${escapeHtml(a.host)}:${a.port} · ${escapeHtml(a.player)}</div>
+          </div>
+        </div>
+        <div class="instance-right">
+          <span class="status">
+            <span class="status-dot ${stClass}"></span>
+            <span class="status-text ${stClass}">${stClass}</span>
+          </span>
+        </div>
+      </div>
+    `;
+  }).join('');
+  list.querySelectorAll('.instance-item').forEach(el => {
+    el.addEventListener('click', () => selectAccount(el.dataset.id));
+    el.addEventListener('dblclick', () => openEditModal(el.dataset.id));
+  });
+}
+
+function updateStats() {
+  const total = state.accounts.length;
+  const online = state.accounts.filter(a => a.status === 'online').length;
+  const connecting = state.accounts.filter(a => a.status === 'connecting' || a.status === 'waiting').length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-online').textContent = online;
+  document.getElementById('stat-connecting').textContent = connecting;
+  document.getElementById('stat-whitelisted').textContent = state.whitelist.length;
+}
+
+function updateAccountStatus(id, status) {
+  const a = state.accounts.find(x => x.id === id);
+  if (a) a.status = status;
+  renderInstances();
+  updateStats();
+  if (state.active === id) {
+    document.getElementById('console-subtitle').textContent = a ? `${a.name} · ${status}` : '';
+    document.getElementById('term-tab-name').textContent = a ? `${a.name} — ${status}` : '— output';
+  }
+}
+
+function selectAccount(id) {
+  state.active = id;
+  const a = state.accounts.find(x => x.id === id);
+  renderInstances();
+  renderConsole();
+  document.getElementById('actions-card').style.display = a ? 'block' : 'none';
+  document.getElementById('console-subtitle').textContent = a ? `${a.name} · ${a.status}` : '';
+  document.getElementById('term-tab-name').textContent = a ? `${a.name} — ${a.status}` : '— output';
+}
+
+function renderConsole() {
+  const c = document.getElementById('console');
+  const lines = state.consoleLines[state.active] || [];
+  c.innerHTML = lines.map(renderLine).join('') || '<div class="term-line system"><span class="msg">No output yet.</span></div>';
+  c.scrollTop = c.scrollHeight;
+}
+
+function renderLine(line) {
+  const ts = new Date(line.ts || Date.now()).toLocaleTimeString('en-GB');
+  return `<div class="term-line ${line.level}"><span class="ts">[${ts}]</span><span class="msg">${escapeHtml(line.msg)}</span></div>`;
+}
+
+function appendLog(accountId, msg, level) {
+  if (!state.consoleLines[accountId]) state.consoleLines[accountId] = [];
+  state.consoleLines[accountId].push({ ts: Date.now(), msg, level });
+  if (state.consoleLines[accountId].length > 1000) state.consoleLines[accountId].shift();
+  if (state.active === accountId) {
+    const c = document.getElementById('console');
+    c.insertAdjacentHTML('beforeend', renderLine({ ts: Date.now(), msg, level }));
+    c.scrollTop = c.scrollHeight;
+  }
+}
+
+function log(level, msg) {
+  // system log to active instance
+  const id = state.active || '__system__';
+  appendLog(id, msg, level);
+}
+
+function renderWhitelist() {
+  const list = document.getElementById('whitelist-list');
+  document.getElementById('whitelist-count').textContent = `${state.whitelist.length} player${state.whitelist.length === 1 ? '' : 's'}`;
+  if (state.whitelist.length === 0) {
+    list.innerHTML = '<div class="text-dim text-sm" style="padding: 12px;">No players in whitelist yet.</div>';
+    return;
+  }
+  list.innerHTML = state.whitelist.map(p => `
+    <span class="whitelist-item">${escapeHtml(p)}<span class="x" data-name="${escapeHtml(p)}" title="Remove">×</span></span>
+  `).join('');
+  list.querySelectorAll('.x').forEach(x => x.addEventListener('click', () => removeFromWhitelist(x.dataset.name)));
+}
+
+// ============================================================
+// UI EVENTS
+// ============================================================
+function setupUI() {
+  // Tabs
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+  // New instance
+  document.getElementById('btn-new-instance').addEventListener('click', () => openModal('modal-new'));
+  document.getElementById('btn-create-instance').addEventListener('click', createInstance);
+  // Login method
+  document.getElementById('btn-method-offline').addEventListener('click', () => startWithMethod('offline'));
+  document.getElementById('btn-method-microsoft').addEventListener('click', () => startWithMethod('msa'));
+  // Whitelist
+  document.getElementById('btn-wl-add').addEventListener('click', addToWhitelist);
+  document.getElementById('wl-input').addEventListener('keydown', e => { if (e.key === 'Enter') addToWhitelist(); });
+  // Edit
+  document.getElementById('btn-save-edit').addEventListener('click', saveEdit);
+  document.getElementById('btn-delete-instance').addEventListener('click', deleteInstance);
+  // Quick actions
+  document.querySelectorAll('.action[data-cmd]').forEach(b => b.addEventListener('click', () => sendCommand(b.dataset.cmd)));
+  document.querySelectorAll('.action[data-chat]').forEach(b => b.addEventListener('click', () => sendCommand(b.dataset.chat)));
+  // Command input
+  document.getElementById('cmd-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const v = e.target.value.trim();
+      if (v) { sendCommand(v); e.target.value = ''; }
+    }
+  });
+  // Clear
+  document.getElementById('btn-clear-console').addEventListener('click', () => {
+    if (state.active) state.consoleLines[state.active] = [];
+    renderConsole();
+  });
+  // Refresh
+  document.getElementById('btn-refresh').addEventListener('click', init);
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+  document.getElementById('tab-' + name).classList.remove('hidden');
+  document.getElementById('bc-current').textContent = name[0].toUpperCase() + name.slice(1);
+}
+
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ============================================================
+// ACTIONS
+// ============================================================
+async function createInstance() {
+  const name = document.getElementById('new-name').value.trim();
+  const host = document.getElementById('new-host').value.trim();
+  const port = parseInt(document.getElementById('new-port').value) || 25565;
+  const player = document.getElementById('new-player').value.trim();
+  const antiafk = document.getElementById('new-antiafk').checked;
+  const chatlog = document.getElementById('new-chatlog').checked;
+  if (!name || !host || !player) { alert('Please fill all fields'); return; }
+  try {
+    const r = await api('/instances', 'POST', { name, host, port, player, antiafk, chatlog });
+    state.accounts = r.accounts;
+    renderInstances();
+    closeModal('modal-new');
+    selectAccount(r.id);
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-host').value = '';
+    document.getElementById('new-player').value = '';
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function startWithMethod(method) {
+  if (!state.active) return;
+  closeModal('modal-login-method');
+  try {
+    await api(`/instances/${state.active}/start`, 'POST', { method });
+  } catch (e) { alert('Start failed: ' + e.message); }
+}
+
+async function sendCommand(cmd) {
+  if (!state.active) { alert('Select an instance first'); return; }
+  appendLog(state.active, `> ${cmd}`, 'input');
+  try {
+    await api(`/instances/${state.active}/command`, 'POST', { cmd });
+  } catch (e) { appendLog(state.active, 'Send failed: ' + e.message, 'error'); }
+}
+
+async function openLoginMethod() {
+  if (!state.active) { alert('Select an instance first'); return; }
+  const a = state.accounts.find(x => x.id === state.active);
+  if (!a) return;
+  if (a.status === 'online' || a.status === 'connecting') { alert('Already running'); return; }
+  document.getElementById('lm-name').textContent = a.name;
+  openModal('modal-login-method');
+}
+
+// click on active instance's status / subtitle to start
+document.getElementById('console-subtitle').addEventListener('click', openLoginMethod);
+document.getElementById('console-subtitle').style.cursor = 'pointer';
+document.getElementById('console-subtitle').title = 'Click to start instance';
+
+function showDeviceCode(url, code) {
+  document.getElementById('dev-url').textContent = url;
+  document.getElementById('dev-code').textContent = code;
+  openModal('modal-device');
+}
+
+function openEditModal(id) {
+  const a = state.accounts.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-name').value = a.name;
+  document.getElementById('edit-host').value = a.host;
+  document.getElementById('edit-port').value = a.port;
+  document.getElementById('edit-player').value = a.player;
+  openModal('modal-edit');
+}
+
+async function saveEdit() {
+  const id = document.getElementById('edit-id').value;
+  const data = {
+    name: document.getElementById('edit-name').value.trim(),
+    host: document.getElementById('edit-host').value.trim(),
+    port: parseInt(document.getElementById('edit-port').value) || 25565,
+    player: document.getElementById('edit-player').value.trim(),
+  };
+  try {
+    const r = await api(`/instances/${id}`, 'PUT', data);
+    state.accounts = r.accounts;
+    renderInstances();
+    closeModal('modal-edit');
+  } catch (e) { alert('Save failed: ' + e.message); }
+}
+
+async function deleteInstance() {
+  const id = document.getElementById('edit-id').value;
+  if (!confirm('Delete this instance?')) return;
+  try {
+    const r = await api(`/instances/${id}`, 'DELETE');
+    state.accounts = r.accounts;
+    if (state.active === id) state.active = null;
+    renderInstances();
+    closeModal('modal-edit');
+  } catch (e) { alert('Delete failed: ' + e.message); }
+}
+
+async function addToWhitelist() {
+  const input = document.getElementById('wl-input');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.whitelist.includes(name)) { input.value = ''; return; }
+  state.whitelist.push(name);
+  input.value = '';
+  await saveWhitelist();
+}
+
+async function removeFromWhitelist(name) {
+  state.whitelist = state.whitelist.filter(p => p !== name);
+  await saveWhitelist();
+}
+
+async function saveWhitelist() {
+  try {
+    await api('/whitelist', 'PUT', { players: state.whitelist });
+    renderWhitelist();
+    updateStats();
+  } catch (e) { alert('Save failed: ' + e.message); }
+}
+
+// ============================================================
+// UTIL
+// ============================================================
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+// boot
+init();
 </script>
 </body>
 </html>

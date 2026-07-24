@@ -1,11 +1,10 @@
 {
   "name": "mcc-control-panel",
-  "version": "1.0.0",
-  "description": "Minecraft Console Client (MCC) Web Control Panel",
+  "version": "4.0.0",
+  "description": "Minecraft Console Client (MCC) Web Control Panel - Multi-account + Whitelist + Microsoft device code",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.19.2",

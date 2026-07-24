@@ -1,5 +1,3 @@
-# Ignore MCC binary directory so git pull doesn't wipe it
-Minecraft-Console-Client/
 node_modules/
 logs/
 *.log

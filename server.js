@@ -383,9 +383,9 @@ setInterval(() => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`  🌐 Panel:  http://0.0.0.0:${PORT}`);
-  console.log(`  📂 MCC:    ${MCC_BIN} ${fs.existsSync(MCC_BIN) ? '✓' : '✗ MISSING'}`);
-  console.log(`  👤 Single-user mode (no token)`);
+  console.log(`  🌐 面板地址:  http://0.0.0.0:${PORT}`);
+  console.log(`  📂 MCC 路径:  ${MCC_BIN} ${fs.existsSync(MCC_BIN) ? '✓' : '✗ 未安装'}`);
+  console.log(`  👤 单人模式 (无需登录)`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 });
 

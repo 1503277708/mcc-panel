@@ -461,19 +461,14 @@
         <label class="label">实例名称</label>
         <input class="input" id="new-name" placeholder="例如:主机器人" />
       </div>
-      <div class="form-grid">
-        <div class="form-row">
-          <label class="label">服务器地址</label>
-          <input class="input" id="new-host" placeholder="mc.example.com" />
-        </div>
-        <div class="form-row">
-          <label class="label">端口</label>
-          <input class="input" id="new-port" value="25565" />
-        </div>
+      <div class="form-row">
+        <label class="label">服务器地址</label>
+        <input class="input" id="new-host" placeholder="mc.example.com (不用加端口,MCC 自动解析)" />
+        <div class="form-hint">只填域名或 IP,例如 mc.hypixel.net。MCC 会自动从 SRV 记录读取端口。</div>
       </div>
       <div class="form-row">
-        <label class="label">玩家名</label>
-        <input class="input" id="new-player" placeholder="例如:SteveBot" />
+        <label class="label">微软账号邮箱</label>
+        <input class="input" id="new-player" placeholder="例如:yourname@outlook.com" />
         <div class="form-hint">启动后会要求你在 microsoft.com/link 输入验证码</div>
       </div>
       <div class="form-row">
@@ -548,18 +543,12 @@
         <label class="label">实例名称</label>
         <input class="input" id="edit-name" />
       </div>
-      <div class="form-grid">
-        <div class="form-row">
-          <label class="label">服务器地址</label>
-          <input class="input" id="edit-host" />
-        </div>
-        <div class="form-row">
-          <label class="label">端口</label>
-          <input class="input" id="edit-port" />
-        </div>
+      <div class="form-row">
+        <label class="label">服务器地址</label>
+        <input class="input" id="edit-host" />
       </div>
       <div class="form-row">
-        <label class="label">玩家名</label>
+        <label class="label">微软账号邮箱</label>
         <input class="input" id="edit-player" />
       </div>
     </div>
@@ -727,7 +716,7 @@ function renderPanel(a) {
               <span style="background:#facc15"></span>
               <span style="background:#4ade80"></span>
             </div>
-            <div class="terminal-name">${escapeHtml(a.name)}.log</div>
+            <div class="terminal-name">${escapeHtml(a.name)} @ ${escapeHtml(a.host || '未配置')}</div>
             <button class="btn btn-sm btn-ghost" data-act="clear" data-id="${a.id}" style="color: var(--term-muted); font-size: 10px;">清空</button>
           </div>
           <div class="terminal-body" data-term="${a.id}">
@@ -883,13 +872,12 @@ function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 async function createInstance() {
   const name = document.getElementById('new-name').value.trim();
   const host = document.getElementById('new-host').value.trim();
-  const port = parseInt(document.getElementById('new-port').value) || 25565;
   const player = document.getElementById('new-player').value.trim();
   const antiafk = document.getElementById('new-antiafk').checked;
   const chatlog = document.getElementById('new-chatlog').checked;
   if (!name || !host || !player) { alert('请填写所有字段'); return; }
   try {
-    const r = await api('/instances', 'POST', { name, host, port, player, antiafk, chatlog });
+    const r = await api('/instances', 'POST', { name, host, player, antiafk, chatlog });
     state.accounts = r.accounts;
     renderAllPanels();
     closeModal('modal-new');
@@ -975,7 +963,6 @@ async function saveEdit() {
   const data = {
     name: document.getElementById('edit-name').value.trim(),
     host: document.getElementById('edit-host').value.trim(),
-    port: parseInt(document.getElementById('edit-port').value) || 25565,
     player: document.getElementById('edit-player').value.trim(),
   };
   try {

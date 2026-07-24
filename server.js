@@ -61,19 +61,26 @@ class MCCAccount {
   }
 
   buildArgs(account, method) {
-    const args = [];
-    if (account.host) args.push('-server', account.host);
-    if (account.port) args.push('-port', String(account.port));
-    if (account.user) args.push('-login', account.user);
+    // MCC v26.1 实际调用格式：
+    //   MinecraftClient <username> <password> <server>
+    //   脱机模式密码为 '-'，如：MinecraftClient Steve - mc.hypixel.net
+    //   微软账号使用 ini 配置文件 + 提示输入邮箱
     const m = method || account.auth || 'offline';
-    if (m === 'msa' || m === 'microsoft') args.push('-method', 'msa');
-    else if (m === 'mojang') args.push('-method', 'mojang');
-    else args.push('-method', 'offline');
-    if (account.bots) {
-      if (account.bots.antiafk) args.push('-antiafk');
-      if (account.bots.chatlog) args.push('-chatlog');
+    if (m === 'msa' || m === 'microsoft') {
+      // 微软设备码：生成临时 ini，然后只传 ini
+      const iniPath = path.join(LOG_DIR, `${account.id || 'tmp'}.ini`);
+      const ini = `[Main.General]
+Account = { Login = "${account.user || ''}", Password = "" }
+Server = { Host = "${account.host}" }
+AccountType = "microsoft"
+Method = "mcc"
+`;
+      fs.writeFileSync(iniPath, ini);
+      return [iniPath];
+    } else {
+      // 离线模式或 Mojang：使用三参数式
+      return [account.user || account.player || 'Player', '-', account.host];
     }
-    return args;
   }
 
   start(account, method) {

@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCC 控制台 · Minecraft Console Client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg-soft: #161c24;
+    --bg-card: #1c232c;
+    --border: #2a3340;
+    --border-soft: #232b36;
+    --text: #e6edf3;
+    --text-soft: #8b98a5;
+    --text-dim: #5c6773;
+    --primary: #5eead4;
+    --primary-soft: rgba(94, 234, 212, 0.12);
+    --accent: #fbbf24;
+    --danger: #f87171;
+    --success: #4ade80;
+    --info: #60a5fa;
+    --purple: #c084fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(94, 234, 212, 0.06) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(251, 191, 36, 0.04) 0px, transparent 50%);
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(15, 20, 25, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-soft);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-mark {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary) 0%, #2dd4bf 100%);
+    display: grid; place-items: center;
+    color: #0f1419; font-weight: 700; font-size: 16px;
+    box-shadow: 0 4px 16px rgba(94, 234, 212, 0.25);
+  }
+  .brand-text h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .brand-text p { font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono', monospace; }
+  .topbar-status { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+  .status-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .status-dot.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+  .status-dot.connecting { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  .status-dot.waiting-code { background: var(--purple); animation: pulse 1.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .app {
+    display: grid;
+    grid-template-columns: 320px 1fr 360px;
+    gap: 16px;
+    padding: 16px 20px;
+    max-width: 1800px;
+    margin: 0 auto;
+    min-height: calc(100vh - 64px);
+  }
+  @media (max-width: 1280px) { .app { grid-template-columns: 280px 1fr; } .col-right { display: none; } }
+  @media (max-width: 900px) { .app { grid-template-columns: 1fr; } .col-left { display: none; } }
+
+  .col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border-soft);
+  }
+  .card-head h3 {
+    font-size: 12px; font-weight: 600; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .card-head .accent-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+  .card-body { padding: 14px; }
+
+  /* ====== Accounts sidebar ====== */
+  .acc-list { display: flex; flex-direction: column; gap: 6px; }
+  .acc-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .acc-item:hover { border-color: var(--border); }
+  .acc-item.active { border-color: var(--primary); background: var(--primary-soft); }
+  .acc-status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--text-dim); flex-shrink: 0;
+  }
+  .acc-status-dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .acc-status-dot.connecting { background: var(--accent); animation: pulse 1.4s infinite; }
+  .acc-status-dot.offline { background: var(--text-dim); }
+  .acc-status-dot.error { background: var(--danger); }
+  .acc-status-dot.waiting-code { background: var(--purple); animation: pulse 1.4s infinite; }
+  .acc-info { flex: 1; min-width: 0; }
+  .acc-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .acc-meta { font-size: 10px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+  /* ====== Action buttons ====== */
+  .actions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .action-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 12px 8px;
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    cursor: pointer; transition: all 0.15s ease;
+    font-family: inherit; font-size: 11.5px; text-align: center;
+  }
+  .action-btn:hover:not(:disabled) { background: var(--primary-soft); border-color: var(--primary); transform: translateY(-1px); }
+  .action-btn:active:not(:disabled) { transform: translateY(0); }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .action-btn svg { width: 20px; height: 20px; color: var(--primary); }
+  .action-btn .label { font-weight: 500; }
+  .action-btn .hint { font-size: 9.5px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+  .action-btn.tp:hover:not(:disabled) { background: rgba(74, 222, 128, 0.12); border-color: var(--success); }
+  .action-btn.tp svg { color: var(--success); }
+  .action-btn.danger:hover:not(:disabled) { background: rgba(248, 113, 113, 0.1); border-color: var(--danger); }
+  .action-btn.danger svg { color: var(--danger); }
+  .action-btn.warn:hover:not(:disabled) { background: rgba(251, 191, 36, 0.1); border-color: var(--accent); }
+  .action-btn.warn svg { color: var(--accent); }
+
+  .command-row { display: flex; gap: 8px; margin-top: 12px; }
+  .input {
+    flex: 1; padding: 9px 12px;
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .input:focus { border-color: var(--primary); }
+  .input::placeholder { color: var(--text-dim); }
+  .btn-primary {
+    padding: 9px 16px; background: var(--primary); color: #0f1419;
+    border: none; border-radius: 10px; font-weight: 600;
+    cursor: pointer; font-family: inherit; font-size: 12.5px;
+    transition: all 0.15s;
+  }
+  .btn-primary:hover:not(:disabled) { background: #7df0d8; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary {
+    padding: 9px 14px; background: var(--bg-soft); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px; font-weight: 500;
+    cursor: pointer; font-family: inherit; font-size: 12.5px;
+    transition: all 0.15s;
+  }
+  .btn-secondary:hover { background: var(--bg-card); border-color: var(--primary); }
+  .btn-ghost {
+    padding: 6px 10px; background: transparent; color: var(--text-soft);
+    border: 1px solid var(--border); border-radius: 8px;
+    cursor: pointer; font-family: inherit; font-size: 11px;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--primary); }
+
+  /* ====== Console ====== */
+  .console {
+    background: #0a0e13; border-radius: 0 0 14px 14px;
+    padding: 14px; height: 540px; overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55;
+  }
+  .console::-webkit-scrollbar { width: 8px; }
+  .console::-webkit-scrollbar-track { background: transparent; }
+  .console::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .log-line { display: flex; gap: 8px; padding: 1px 0; word-break: break-word; }
+  .log-time { color: var(--text-dim); flex-shrink: 0; }
+  .log-tag { flex-shrink: 0; font-weight: 600; width: 56px; font-size: 10.5px; }
+  .log-tag.info { color: var(--info); }
+  .log-tag.warn { color: var(--accent); }
+  .log-tag.error { color: var(--danger); }
+  .log-tag.chat { color: var(--primary); }
+  .log-tag.cmd { color: var(--purple); }
+  .log-tag.tp { color: var(--success); }
+  .log-tag.system { color: var(--text-soft); }
+  .log-msg { color: var(--text); flex: 1; }
+  .log-msg .player { color: var(--accent); }
+  .log-msg .mention { color: var(--primary); font-weight: 600; }
+
+  /* ====== Tabs ====== */
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--bg-soft);
+    padding: 4px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+  .tab {
+    flex: 1; padding: 7px 10px; background: transparent; border: none;
+    color: var(--text-soft); border-radius: 8px; cursor: pointer;
+    font-family: inherit; font-size: 11.5px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .tab.active { background: var(--bg-card); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+  .form-row label { font-size: 10.5px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; }
+  .form-row .check { display: flex; align-items: center; gap: 6px; text-transform: none; font-size: 12px; color: var(--text); }
+
+  /* ====== Whitelist ====== */
+  .wl-list {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    padding: 8px; min-height: 60px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .wl-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 8px 4px 10px;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    border-radius: 999px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .wl-chip .x {
+    width: 16px; height: 16px;
+    display: grid; place-items: center;
+    background: transparent; border: none;
+    color: var(--primary); cursor: pointer; border-radius: 50%;
+    font-size: 14px; line-height: 1;
+  }
+  .wl-chip .x:hover { background: var(--primary); color: #0f1419; }
+  .wl-empty { color: var(--text-dim); font-size: 11px; padding: 6px; }
+
+  /* ====== Toasts ====== */
+  .toast-container { position: fixed; top: 70px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-left: 3px solid var(--primary); border-radius: 10px;
+    padding: 10px 14px; font-size: 12.5px; color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 240px;
+    animation: slide-in 0.2s ease;
+  }
+  .toast.error { border-left-color: var(--danger); }
+  .toast.warn { border-left-color: var(--accent); }
+  @keyframes slide-in { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ====== Device code modal ====== */
+  .modal-back {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    z-index: 300;
+    display: grid; place-items: center;
+    animation: fade-in 0.2s;
+  }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 460px;
+    width: 90%;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+  }
+  .modal h2 { font-size: 18px; margin-bottom: 8px; }
+  .modal p { color: var(--text-soft); font-size: 13px; margin-bottom: 16px; }
+  .device-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px; font-weight: 700;
+    letter-spacing: 4px;
+    text-align: center;
+    padding: 20px;
+    background: var(--bg-soft);
+    border: 2px dashed var(--primary);
+    border-radius: 12px;
+    color: var(--primary);
+    margin: 16px 0;
+  }
+  .device-url {
+    text-align: center;
+    color: var(--info);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .device-steps { background: var(--bg-soft); border-radius: 10px; padding: 14px; font-size: 12.5px; }
+  .device-steps ol { margin-left: 20px; }
+  .device-steps li { margin-bottom: 6px; color: var(--text-soft); }
+  .device-steps li strong { color: var(--text); }
+  .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">M</div>
+    <div class="brand-text">
+      <h1>MCC 控制台</h1>
+      <p>Minecraft Console Client · v2.0</p>
+    </div>
+  </div>
+  <div class="topbar-status">
+    <div class="status-pill"><span class="status-dot" id="dot-active"></span><span id="status-active">未选择账号</span></div>
+    <div class="status-pill" id="global-pill" style="display:none;"><span class="status-dot online"></span><span id="status-global">已连接</span></div>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- LEFT: Accounts list -->
+  <div class="col col-left">
+    <div class="card">
+      <div class="card-head">
+        <h3><span class="accent-dot"></span>账号列表</h3>
+        <button class="btn-ghost" onclick="addAccount()">+ 新增</button>
+      </div>
+      <div class="card-body" style="padding:10px;">
+        <div class="acc-list" id="acc-list"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button class="btn-primary" style="flex:1;font-size:11px;padding:7px;" onclick="startAll()">全部启动</button>
+          <button class="btn-secondary" style="font-size:11px;padding:7px;" onclick="stopAll()">全部停止</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><span class="accent-dot"></span>白名单（自动同意 TPA）</h3>
+      </div>
+      <div class="card-body" style="padding:12px;">
+        <div class="wl-list" id="wl-list">
+          <div class="wl-empty">白名单为空，添加玩家后他们的 TPA / TPHERE 请求会自动同意</div>
+        </div>
+        <div class="command-row" style="margin-top:0;">
+          <input class="input" id="wl-input" placeholder="玩家名（回车添加）" autocomplete="off" />
+          <button class="btn-secondary" onclick="addWhitelist()">添加</button>
+        </div>
+        <div style="font-size:10.5px;color:var(--text-dim);margin-top:8px;line-height:1.5;">
+          ✦ 白名单玩家的 /tpa 和 /tphere 请求将自动接受<br>
+          ✦ 不在白名单的请求会提示你需要手动确认
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIDDLE: Active account console -->
+  <div class="col">
+    <div class="card">
+      <div class="card-head">
+        <h3>
+          <span class="accent-dot"></span>
+          <span id="active-title">未选择账号</span>
+        </h3>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-ghost" id="btn-start-acc" onclick="startActive()" disabled>▶ 启动</button>
+          <button class="btn-ghost" id="btn-stop-acc" onclick="stopActive()" disabled>■ 停止</button>
+        </div>
+      </div>
+      <div class="card-body" style="padding:14px;">
+        <div class="actions-grid" id="action-grid">
+          <button class="action-btn" data-cmd="list" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            <span class="label">玩家列表</span><span class="hint">/list</span>
+          </button>
+          <button class="action-btn" data-cmd="help" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span class="label">帮助</span><span class="hint">/help</span>
+          </button>
+          <button class="action-btn" data-cmd="home" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M9 21V12h6v9"/></svg>
+            <span class="label">回家</span><span class="hint">/home</span>
+          </button>
+          <button class="action-btn" data-cmd="sethome" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span class="label">设置家</span><span class="hint">/sethome</span>
+          </button>
+
+          <!-- 两个新按钮：同意 TPA / 同意 TPHERE -->
+          <button class="action-btn tp" data-cmd-accept="tpa" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span class="label">同意 TPA</span><span class="hint">/tpaccept</span>
+          </button>
+          <button class="action-btn tp" data-cmd-accept="tphere" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <span class="label">同意 TPHERE</span><span class="hint">/tpaccept</span>
+          </button>
+
+          <button class="action-btn warn" data-cmd="back" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 0 1 0 8h-4"/></svg>
+            <span class="label">返回死亡点</span><span class="hint">/back</span>
+          </button>
+          <button class="action-btn" data-cmd="afk" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="label">挂机模式</span><span class="hint">/afk</span>
+          </button>
+          <button class="action-btn" data-cmd="msg" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="label">私聊玩家</span><span class="hint">/msg</span>
+          </button>
+          <button class="action-btn" data-cmd="chat hi" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            <span class="label">发送聊天</span><span class="hint">chat &lt;msg&gt;</span>
+          </button>
+          <button class="action-btn" data-cmd="respawn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span class="label">重生</span><span class="hint">/respawn</span>
+          </button>
+          <button class="action-btn danger" data-action="disconnect" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+            <span class="label">断开</span><span class="hint">quit</span>
+          </button>
+        </div>
+        <div class="command-row">
+          <input class="input" id="customCmd" placeholder="自定义指令（仅作用于当前账号）" disabled />
+          <button class="btn-primary" id="btn-send-cmd" onclick="sendCustom()" disabled>发送</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="flex:1;">
+      <div class="card-head">
+        <h3><span class="accent-dot"></span>实时日志 <span style="font-size:10px;color:var(--text-dim);text-transform:none;margin-left:8px;">— 当前账号</span></h3>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-ghost" onclick="clearLogs()">清屏</button>
+          <button class="btn-ghost" onclick="toggleAutoScroll()" id="btn-autoscroll">滚动 ON</button>
+        </div>
+      </div>
+      <div class="console" id="console"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Account config -->
+  <div class="col col-right">
+    <div class="card">
+      <div class="card-head"><h3><span class="accent-dot"></span>账号配置</h3></div>
+      <div class="card-body">
+        <div class="tabs">
+          <button class="tab active" data-tab="conn">连接</button>
+          <button class="tab" data-tab="login">登录</button>
+          <button class="tab" data-tab="bot">机器人</button>
+        </div>
+
+        <div class="tab-content active" data-content="conn">
+          <div class="form-row">
+            <label>账号昵称</label>
+            <input class="input" id="cfg-name" placeholder="主账号" />
+          </div>
+          <div class="form-row">
+            <label>服务器地址</label>
+            <input class="input" id="cfg-host" placeholder="mc.example.com" />
+          </div>
+          <div class="form-row">
+            <label>端口</label>
+            <input class="input" id="cfg-port" placeholder="25565" value="25565" />
+          </div>
+          <div class="form-row">
+            <label>服务器版本（留空自动）</label>
+            <input class="input" id="cfg-version" placeholder="1.20.4" />
+          </div>
+        </div>
+
+        <div class="tab-content" data-content="login">
+          <div class="form-row">
+            <label>登录方式</label>
+            <select class="input" id="cfg-auth">
+              <option value="mojang">Mojang 账号（设备码）</option>
+              <option value="microsoft">微软账号（设备码）</option>
+              <option value="offline">离线模式（无需密码）</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>邮箱 / 玩家名</label>
+            <input class="input" id="cfg-user" placeholder="离线模式随便填" />
+          </div>
+          <div class="form-row" id="pass-row" style="display:none;">
+            <label>密码（可选，设备码登录不需要）</label>
+            <input class="input" id="cfg-pass" type="password" placeholder="留空 = 用设备码" />
+          </div>
+          <button class="btn-secondary" style="width:100%;" onclick="saveCurrentAccount()">保存这个账号</button>
+        </div>
+
+        <div class="tab-content" data-content="bot">
+          <div class="form-row">
+            <label class="check"><input type="checkbox" id="bot-autoreconnect" checked /> 自动重连</label>
+            <label class="check"><input type="checkbox" id="bot-autorespond" /> 自动回复关键词</label>
+            <label class="check"><input type="checkbox" id="bot-antiafk" /> 防 AFK 踢出</label>
+            <label class="check"><input type="checkbox" id="bot-logchat" checked /> 记录聊天</label>
+            <label class="check"><input type="checkbox" id="bot-autotp" checked /> 白名单自动同意 TPA</label>
+          </div>
+          <button class="btn-secondary" style="width:100%;" onclick="saveCurrentAccount()">保存机器人设置</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3><span class="accent-dot"></span>状态统计</h3>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+          <div style="background:var(--bg-soft);padding:10px;border-radius:8px;">
+            <div style="color:var(--text-dim);font-size:10.5px;text-transform:uppercase;">已收消息</div>
+            <div id="stat-msgs" style="font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--primary);margin-top:4px;">0</div>
+          </div>
+          <div style="background:var(--bg-soft);padding:10px;border-radius:8px;">
+            <div style="color:var(--text-dim);font-size:10.5px;text-transform:uppercase;">已发指令</div>
+            <div id="stat-cmds" style="font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--purple);margin-top:4px;">0</div>
+          </div>
+          <div style="background:var(--bg-soft);padding:10px;border-radius:8px;">
+            <div style="color:var(--text-dim);font-size:10.5px;text-transform:uppercase;">运行时间</div>
+            <div id="stat-uptime" style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);margin-top:6px;">--:--:--</div>
+          </div>
+          <div style="background:var(--bg-soft);padding:10px;border-radius:8px;">
+            <div style="color:var(--text-dim);font-size:10.5px;text-transform:uppercase;">TPA 同意</div>
+            <div id="stat-tp" style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--success);margin-top:6px;">0 次</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Device code modal (动态插入) -->
+<div id="modal-root"></div>
+
+<script>
+const state = {
+  accounts: [],
+  active: null,
+  autoScroll: true,
+  msgCount: 0,
+  cmdCount: 0,
+  tpCount: 0,
+  uptime: 0,
+  uptimeTimer: null,
+  whitelist: []
+};
+
+const consoleEl = document.getElementById('console');
+function log(tag, msg) {
+  const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${time}</span><span class="log-tag ${tag}">${tag.toUpperCase()}</span><span class="log-msg">${formatMsg(msg)}</span>`;
+  consoleEl.appendChild(line);
+  if (state.autoScroll) consoleEl.scrollTop = consoleEl.scrollHeight;
+  if (consoleEl.children.length > 1500) consoleEl.removeChild(consoleEl.firstChild);
+  if (tag === 'chat') { state.msgCount++; document.getElementById('stat-msgs').textContent = state.msgCount; }
+  if (tag === 'cmd')  { state.cmdCount++; document.getElementById('stat-cmds').textContent = state.cmdCount; }
+  if (tag === 'tp')   { state.tpCount++; document.getElementById('stat-tp').textContent = state.tpCount + ' 次'; }
+}
+function formatMsg(text) {
+  return String(text)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/<(\w+)>/g, '<span class="mention">$1</span>')
+    .replace(/\[(\w+)\]/g, '<span class="player">$1</span>');
+}
+function clearLogs() { consoleEl.innerHTML = ''; state.msgCount = 0; state.cmdCount = 0; state.tpCount = 0;
+  document.getElementById('stat-msgs').textContent = 0;
+  document.getElementById('stat-cmds').textContent = 0;
+  document.getElementById('stat-tp').textContent = '0 次';
+}
+function toggleAutoScroll() {
+  state.autoScroll = !state.autoScroll;
+  document.getElementById('btn-autoscroll').textContent = state.autoScroll ? '滚动 ON' : '滚动 OFF';
+}
+function toast(msg, type='info', duration=3000) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (type !== 'info' ? ' ' + type : '');
+  t.textContent = msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(), 200); }, duration);
+}
+function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ============== WebSocket ==============
+let ws = null;
+function connectWS(token) {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const url = `${proto}://${location.host}/ws?token=${encodeURIComponent(token)}`;
+  ws = new WebSocket(url);
+  ws.onopen = () => {
+    log('system', '✓ 已连接面板后端');
+    document.getElementById('global-pill').style.display = 'flex';
+    document.getElementById('status-global').textContent = '已连接';
+  };
+  ws.onclose = () => {
+    log('error', '与后端断开，3秒后重连...');
+    document.getElementById('global-pill').style.display = 'none';
+    setTimeout(() => connectWS(token), 3000);
+  };
+  ws.onerror = () => log('error', 'WebSocket 错误');
+  ws.onmessage = e => {
+    try { handleBackendMsg(JSON.parse(e.data)); } catch(err) { console.error(err); }
+  };
+}
+function sendWS(obj) {
+  if (!ws || ws.readyState !== 1) { toast('未连接到后端', 'warn'); return false; }
+  ws.send(JSON.stringify(obj));
+  return true;
+}
+
+function handleBackendMsg(msg) {
+  switch (msg.type) {
+    case 'hello':
+      state.accounts = (msg.accounts || []).map(a => ({...a, status: a.status || 'offline'}));
+      state.whitelist = msg.whitelist || [];
+      renderAccounts();
+      renderWhitelist();
+      if (state.accounts.length > 0) selectAccount(state.accounts[0].id);
+      break;
+    case 'accounts':
+      state.accounts = msg.accounts.map(a => ({...a, status: a.status || 'offline'}));
+      renderAccounts();
+      break;
+    case 'output':
+      // Only show output from the active account
+      if (msg.accountId === state.active) {
+        routeOutput(msg.data);
+      }
+      // Update account status based on output
+      const acc = state.accounts.find(a => a.id === msg.accountId);
+      if (acc) {
+        if (msg.data.includes('Logged in') || msg.data.includes('joined')) {
+          if (acc.status !== 'online') { acc.status = 'online'; renderAccounts(); updateActionStates(); }
+        } else if (msg.data.includes('Disconnect') || msg.data.includes('Connection lost')) {
+          if (acc.status !== 'offline') { acc.status = 'offline'; renderAccounts(); updateActionStates(); }
+        } else if (msg.data.includes('Waiting') && msg.data.includes('code')) {
+          if (acc.status !== 'waiting-code') { acc.status = 'waiting-code'; renderAccounts(); }
+        }
+      }
+      // Auto-detect tpa requests
+      handleTpaDetection(msg.data, msg.accountId);
+      break;
+    case 'device-code':
+      showDeviceCode(msg.accountId, msg.code, msg.url, msg.instructions);
+      break;
+    case 'account-status': {
+      const a = state.accounts.find(x => x.id === msg.id);
+      if (a) { a.status = msg.status; renderAccounts(); updateActionStates(); }
+      break;
+    }
+    case 'whitelist-update':
+      state.whitelist = msg.whitelist;
+      renderWhitelist();
+      break;
+    case 'error':
+      log('error', msg.msg);
+      toast(msg.msg, 'error');
+      break;
+    case 'tp-auto':
+      if (msg.accountId === state.active) {
+        log('tp', `白名单玩家 ${msg.player} → 自动同意 ${msg.kind.toUpperCase()}`);
+      }
+      break;
+  }
+}
+
+function routeOutput(raw) {
+  const lines = raw.split('\n').filter(l => l.trim());
+  for (const line of lines) {
+    const l = line.trim();
+    if (!l) continue;
+    // Detect tpa requests
+    if (/has requested to teleport to you/i.test(l) || /请求传送到你这里/i.test(l)) {
+      log('tp', '📩 ' + l);
+    } else if (/has requested that you teleport to them/i.test(l) || /请求你传送到他那里/i.test(l)) {
+      log('tp', '📩 ' + l);
+    } else if (/has accepted your teleport request/i.test(l) || /同意.*传送/i.test(l)) {
+      log('tp', '✅ ' + l);
+    } else if (/\[CHAT\]/.test(l) || l.startsWith('<') || l.includes(' whispers ')) {
+      log('chat', l.replace(/\[CHAT\]\s*/i, ''));
+    } else if (/error|fail|exception/i.test(l)) {
+      log('error', l);
+    } else if (/warn|警告|注意/i.test(l)) {
+      log('warn', l);
+    } else if (l.startsWith('>')) {
+      // command echo, skip
+    } else {
+      log('info', l);
+    }
+  }
+}
+
+// ============== Accounts ==============
+function renderAccounts() {
+  const el = document.getElementById('acc-list');
+  if (state.accounts.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:11px;padding:10px;text-align:center;">还没有账号，点右上「+ 新增」</div>';
+    return;
+  }
+  el.innerHTML = state.accounts.map(a => `
+    <div class="acc-item ${state.active === a.id ? 'active' : ''}" data-id="${a.id}">
+      <div class="acc-status-dot ${a.status}"></div>
+      <div class="acc-info">
+        <div class="acc-name">${escapeHtml(a.name)}</div>
+        <div class="acc-meta">${escapeHtml(a.user || '未配置')} · ${a.status}</div>
+      </div>
+    </div>
+  `).join('');
+  el.querySelectorAll('.acc-item').forEach(item => {
+    item.addEventListener('click', () => selectAccount(item.dataset.id));
+  });
+}
+
+function addAccount() {
+  sendWS({ type: 'create-account' });
+}
+function selectAccount(id) {
+  state.active = id;
+  state.msgCount = 0; state.cmdCount = 0; state.tpCount = 0;
+  state.uptime = 0;
+  if (state.uptimeTimer) clearInterval(state.uptimeTimer);
+  document.getElementById('stat-msgs').textContent = 0;
+  document.getElementById('stat-cmds').textContent = 0;
+  document.getElementById('stat-tp').textContent = '0 次';
+  document.getElementById('stat-uptime').textContent = '--:--:--';
+  startUptimeTimer();
+
+  renderAccounts();
+  const a = state.accounts.find(x => x.id === id);
+  if (a) {
+    document.getElementById('active-title').textContent = a.name + '  ›  ' + (a.user || '未配置');
+    document.getElementById('cfg-name').value = a.name || '';
+    document.getElementById('cfg-host').value = a.host || '';
+    document.getElementById('cfg-port').value = a.port || '25565';
+    document.getElementById('cfg-version').value = a.version || '';
+    document.getElementById('cfg-user').value = a.user || '';
+    document.getElementById('cfg-pass').value = a.pass || '';
+    document.getElementById('cfg-auth').value = a.auth || 'offline';
+    document.getElementById('bot-autoreconnect').checked = a.bots?.autoreconnect !== false;
+    document.getElementById('bot-autorespond').checked = !!a.bots?.autorespond;
+    document.getElementById('bot-antiafk').checked = !!a.bots?.antiafk;
+    document.getElementById('bot-logchat').checked = a.bots?.logchat !== false;
+    document.getElementById('bot-autotp').checked = a.bots?.autotp !== false;
+    clearLogs();
+    log('system', `已切换到账号: ${a.name} (${a.user || '未配置'})`);
+    if (a.status === 'online') log('info', '账号在线中...');
+  }
+  updateActionStates();
+  updateTopStatus();
+}
+
+function updateActionStates() {
+  const a = state.accounts.find(x => x.id === state.active);
+  const online = a && a.status === 'online';
+  document.querySelectorAll('.action-btn').forEach(b => {
+    b.disabled = !online;
+  });
+  document.getElementById('customCmd').disabled = !online;
+  document.getElementById('btn-send-cmd').disabled = !online;
+  document.getElementById('btn-start-acc').disabled = !a || (a.status === 'online' || a.status === 'connecting' || a.status === 'waiting-code');
+  document.getElementById('btn-stop-acc').disabled = !a || (a.status === 'offline');
+}
+
+function updateTopStatus() {
+  const a = state.accounts.find(x => x.id === state.active);
+  const dot = document.getElementById('dot-active');
+  const txt = document.getElementById('status-active');
+  if (!a) {
+    dot.className = 'status-dot';
+    txt.textContent = '未选择账号';
+    return;
+  }
+  dot.className = 'status-dot ' + a.status;
+  const statusText = {
+    'offline': '离线', 'connecting': '连接中...', 'online': '在线 ✓',
+    'error': '错误', 'waiting-code': '等待登录'
+  }[a.status] || a.status;
+  txt.textContent = `${a.name} · ${statusText}`;
+}
+
+function startActive() {
+  const a = state.accounts.find(x => x.id === state.active);
+  if (!a) return;
+  if (!a.host) { toast('请先填服务器地址', 'warn'); return; }
+  saveCurrentAccount();
+  setTimeout(() => {
+    a.status = 'connecting';
+    renderAccounts(); updateActionStates(); updateTopStatus();
+    sendWS({ type: 'start-account', id: a.id });
+  }, 100);
+}
+function stopActive() {
+  const a = state.accounts.find(x => x.id === state.active);
+  if (!a) return;
+  sendWS({ type: 'stop-account', id: a.id });
+}
+function startAll() {
+  saveCurrentAccount();
+  setTimeout(() => sendWS({ type: 'start-all' }), 100);
+}
+function stopAll() {
+  sendWS({ type: 'stop-all' });
+}
+
+function saveCurrentAccount() {
+  const a = state.accounts.find(x => x.id === state.active);
+  if (!a) { toast('请先选择账号', 'warn'); return; }
+  a.name = document.getElementById('cfg-name').value || a.name;
+  a.host = document.getElementById('cfg-host').value;
+  a.port = document.getElementById('cfg-port').value;
+  a.version = document.getElementById('cfg-version').value;
+  a.user = document.getElementById('cfg-user').value;
+  a.pass = document.getElementById('cfg-pass').value;
+  a.auth = document.getElementById('cfg-auth').value;
+  a.bots = {
+    autoreconnect: document.getElementById('bot-autoreconnect').checked,
+    autorespond: document.getElementById('bot-autorespond').checked,
+    antiafk: document.getElementById('bot-antiafk').checked,
+    logchat: document.getElementById('bot-logchat').checked,
+    autotp: document.getElementById('bot-autotp').checked,
+  };
+  sendWS({ type: 'update-account', account: a });
+  renderAccounts();
+  updateTopStatus();
+  log('system', '账号已保存');
+  toast('已保存');
+}
+
+function startUptimeTimer() {
+  if (state.uptimeTimer) clearInterval(state.uptimeTimer);
+  const a = state.accounts.find(x => x.id === state.active);
+  state.uptimeTimer = setInterval(() => {
+    if (a && a.status === 'online') {
+      state.uptime++;
+      const h = String(Math.floor(state.uptime / 3600)).padStart(2, '0');
+      const m = String(Math.floor((state.uptime % 3600) / 60)).padStart(2, '0');
+      const s = String(state.uptime % 60).padStart(2, '0');
+      document.getElementById('stat-uptime').textContent = `${h}:${m}:${s}`;
+    }
+  }, 1000);
+}
+
+// ============== Whitelist ==============
+function renderWhitelist() {
+  const el = document.getElementById('wl-list');
+  if (state.whitelist.length === 0) {
+    el.innerHTML = '<div class="wl-empty">白名单为空，添加玩家后他们的 TPA / TPHERE 请求会自动同意</div>';
+    return;
+  }
+  el.innerHTML = state.whitelist.map(p => `
+    <span class="wl-chip">${escapeHtml(p)}<button class="x" onclick="removeWhitelist('${escapeHtml(p)}')">×</button></span>
+  `).join('');
+}
+function addWhitelist() {
+  const v = document.getElementById('wl-input').value.trim();
+  if (!v) return;
+  if (state.whitelist.includes(v)) { toast('已在白名单', 'warn'); return; }
+  state.whitelist.push(v);
+  sendWS({ type: 'whitelist-set', whitelist: state.whitelist });
+  document.getElementById('wl-input').value = '';
+  toast(`已添加 ${v}`, 'info', 1500);
+}
+function removeWhitelist(p) {
+  state.whitelist = state.whitelist.filter(x => x !== p);
+  sendWS({ type: 'whitelist-set', whitelist: state.whitelist });
+  toast(`已移除 ${p}`, 'info', 1500);
+}
+document.getElementById('wl-input').addEventListener('keydown', e => { if (e.key === 'Enter') addWhitelist(); });
+
+// ============== TPA auto-accept (server-side triggered, but we display) ==============
+function handleTpaDetection(text, accountId) {
+  // Server actually handles whitelist accept; this is just for UI display
+}
+
+// ============== Commands ==============
+function sendCmd(cmd) {
+  const a = state.accounts.find(x => x.id === state.active);
+  if (!a || a.status !== 'online') { toast('当前账号未连接', 'warn'); return; }
+  log('cmd', cmd);
+  sendWS({ type: 'cmd', accountId: a.id, text: cmd });
+}
+function sendCustom() {
+  const v = document.getElementById('customCmd').value.trim();
+  if (!v) return;
+  sendCmd(v);
+  document.getElementById('customCmd').value = '';
+}
+document.getElementById('customCmd').addEventListener('keydown', e => { if (e.key === 'Enter') sendCustom(); });
+
+// ============== Action buttons ==============
+document.querySelectorAll('.action-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    const cmd = b.dataset.cmd;
+    const accept = b.dataset.cmdAccept;
+    if (cmd) sendCmd(cmd);
+    if (accept) {
+      // Try common accept commands across plugins
+      const variants = ['/tpaccept', '/tpaaccept', '/tpyes', '/tpahere accept', '/tpaccept'];
+      sendCmd(variants[0]);
+    }
+  });
+});
+
+// ============== Device code modal ==============
+function showDeviceCode(accountId, code, url, instructions) {
+  const root = document.getElementById('modal-root');
+  const a = state.accounts.find(x => x.id === accountId);
+  root.innerHTML = `
+    <div class="modal-back" onclick="if(event.target===this) closeModal()">
+      <div class="modal">
+        <h2>🔐 微软账号登录</h2>
+        <p>账号 <strong style="color:var(--primary);">${escapeHtml(a?.name || '')}</strong> 需要登录，请在浏览器打开下面的网址，然后输入代码：</p>
+        <div class="device-code">${escapeHtml(code)}</div>
+        <div class="device-url">👉 ${escapeHtml(url || 'https://microsoft.com/devicelogin')}</div>
+        <div class="device-steps">
+          <ol>
+            <li>用电脑或手机浏览器<strong>打开上面的网址</strong></li>
+            <li>登录你购买 Minecraft 的<strong>微软账号</strong></li>
+            <li>输入上方的 <strong>${escapeHtml(code)}</strong> 代码</li>
+            <li>点击<strong>「是」允许</strong> MCC 访问</li>
+            <li>登录完成会自动继续，这个窗口可以关闭</li>
+          </ol>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-primary" style="flex:1;" onclick="copyCode('${escapeHtml(code)}')">复制代码</button>
+          <button class="btn-secondary" onclick="closeModal()">关闭</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+function copyCode(c) {
+  navigator.clipboard.writeText(c).then(() => toast('已复制: ' + c));
+}
+
+// ============== Tabs ==============
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelector(`[data-content="${t.dataset.tab}"]`).classList.add('active');
+  });
+});
+
+// ============== Init ==============
+let savedToken = localStorage.getItem('mcc-token');
+if (savedToken) {
+  connectWS(savedToken);
+} else {
+  const token = prompt('请输入面板 Token：');
+  if (token) {
+    localStorage.setItem('mcc-token', token);
+    connectWS(token);
+  } else {
+    log('error', '未输入 Token');
+  }
+}
+updateActionStates();
+</script>
+</body>
+</html>

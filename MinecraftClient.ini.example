@@ -1,0 +1,47 @@
+; Minecraft-Console-Client 配置文件示例
+; 首次启动 MCC 会自动生成 MinecraftClient.ini
+; 这里是一些常用字段的说明
+
+[Main]
+; 登录账号
+login=你的邮箱
+; 密码（建议用 session token 代替明文密码）
+; password=你的密码
+
+; ====== 服务器设置 ======
+[Server]
+host=mc.example.com
+port=25565
+; 服务器版本（1.4.6 - 26.1），留空自动
+; version=1.20.4
+
+; ====== 登录方式 ======
+; mojang: 正版 Mojang 账号
+; microsoft: 微软账号（推荐，2022 年后 Mojang 账号已迁移）
+; offline: 离线模式（无需密码，随便起名）
+[Login]
+method=microsoft
+
+; ====== 自动重连 ======
+[Reconnect]
+Enabled=true
+Delay=5000
+
+; ====== 反 AFK 踢出 ======
+[AntiAFK]
+Enabled=true
+; 每 60 秒动一下
+Interval=60
+
+; ====== 聊天前缀 ======
+[Chat]
+; bot 在聊天里说话时显示的前缀
+BotName=MyBot
+; 收到某关键词自动回复
+; AutoRespond=关键词1=回复1
+;          关键词2=回复2
+
+; ====== 聊天记录 ======
+[Log]
+ChatToFile=true
+LogFile=chat.log
